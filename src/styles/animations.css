@@ -198,3 +198,68 @@
   animation-duration: 0.2s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Language Switch Transition Effects */
+.lang-switching [data-i18n],
+.lang-switching [data-i18n-placeholder],
+.lang-switching .brand-text,
+.lang-switching .hero-title,
+.lang-switching .hero-subtitle,
+.lang-switching .case-title,
+.lang-switching .case-summary,
+.lang-switching .module-card-title,
+.lang-switching .tradeoff-card,
+.lang-switching .quiz-top-bar,
+.lang-switching .quiz-slide,
+.lang-switching .quiz-nav-footer {
+  opacity: 0.15 !important;
+  filter: blur(1.5px);
+  transform: translateY(-2px);
+  transition: opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), filter 0.12s ease, transform 0.12s ease;
+}
+
+[data-i18n],
+[data-i18n-placeholder],
+.brand-text,
+.hero-title,
+.hero-subtitle,
+.case-title,
+.case-summary,
+.module-card-title,
+.tradeoff-card,
+.quiz-top-bar,
+.quiz-slide,
+.quiz-nav-footer {
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), filter 0.22s ease, transform 0.22s ease;
+}
+
+/* Language Button Icon Spinning */
+.lang-toggle-btn.is-switching .globe-icon {
+  animation: spinGlobe 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes spinGlobe {
+  0% { transform: rotate(0deg) scale(0.9); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* Sleek Top Language Progress Sweep Bar */
+#lang-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--aws-orange), #38BDF8, #10B981);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  box-shadow: 0 0 10px rgba(255, 153, 0, 0.6);
+}
+
+#lang-progress-bar.active {
+  opacity: 1;
+  width: 100%;
+}

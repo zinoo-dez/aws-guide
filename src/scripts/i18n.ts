@@ -21,7 +21,42 @@ export function setLanguage(lang: SupportedLang) {
 export function toggleLanguage(): SupportedLang {
   const current = getStoredLanguage();
   const next: SupportedLang = current === 'en' ? 'my' : 'en';
-  setLanguage(next);
+
+  if (typeof document !== 'undefined') {
+    // 1. Add switching classes & progress bar
+    document.body.classList.add('lang-switching');
+    
+    let bar = document.getElementById('lang-progress-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'lang-progress-bar';
+      document.body.appendChild(bar);
+    }
+    // Trigger progress sweep
+    bar.classList.add('active');
+
+    // Spin globe icon
+    document.querySelectorAll('.lang-toggle-btn').forEach(btn => btn.classList.add('is-switching'));
+
+    // 2. Perform translation switch halfway through micro-fade
+    setTimeout(() => {
+      setLanguage(next);
+
+      setTimeout(() => {
+        document.body.classList.remove('lang-switching');
+        document.querySelectorAll('.lang-toggle-btn').forEach(btn => btn.classList.remove('is-switching'));
+        if (bar) {
+          bar.classList.remove('active');
+          setTimeout(() => {
+            if (bar) bar.style.width = '0%';
+          }, 200);
+        }
+      }, 100);
+    }, 120);
+  } else {
+    setLanguage(next);
+  }
+
   return next;
 }
 
