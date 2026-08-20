@@ -22,11 +22,14 @@ learningOutcomes:
   - "Design dynamic tenant isolation (Silo vs Pool) and compute quota management for high-growth B2B SaaS."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## Capstone System Design Masterclass
 Capstone systems combine every layer of the cloud stack—networking, compute, data persistence, streaming, and observability—into a cohesive, fault-tolerant whole.
 
-```mermaid
-graph LR
+<ArchitectureDiagram
+  title="Multi-Region Active-Active Global Architecture"
+  diagram={`graph LR
     subgraph Region_US_East [Region: us-east-1]
         R53_Arc[Route 53 Application Recovery Controller] --> ALB1[ALB Region 1]
         ALB1 --> App1[Fargate Microservices]
@@ -43,13 +46,13 @@ graph LR
 
     style R53_Arc fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
     style DDB1 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
-    style DDB2 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
-```
+    style DDB2 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+/>
 
 ---
 
 ## Case Studies in This Module
 1. **[Netflix-Scale Adaptive Video Streaming](/case-studies/netflix-style-media-streaming)**: Global media ingest, distributed chunked transcoding, origin shielding, and dynamic tokenized CDN delivery.
-2. **[FinTech Multi-Region Active-Active Banking Core](/case-studies/fintech-core-banking-migration)**: Zero-RPO distributed ledger across `us-east-1` and `us-west-2` with DynamoDB Global Tables.
+2. **[FinTech Multi-Region Active-Active Banking Core](/case-studies/fintech-core-banking-migration)**: Zero-RPO distributed ledger across us-east-1 and us-west-2 with DynamoDB Global Tables.
 3. **[Global Multi-Tenant B2B SaaS Platform](/case-studies/global-multitenant-saas)**: Hybrid tenant isolation (Silo vs Pool) with dynamic database tenant partitioning, IAM ABAC, and tenant metering.
 4. **[Smart Connected Fleet Telemetry Engine](/case-studies/smart-fleet-iot-telemetry)**: Ingesting telemetry from 500,000 vehicles via AWS IoT Core MQTT into Timestream with anomaly alerting.

@@ -22,11 +22,14 @@ learningOutcomes:
   - "Deploy Karpenter just-in-time autoscaling on EKS to achieve sub-45s node provisioning."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## Containers: ECS Fargate vs Amazon EKS
 Choosing a container platform is one of the most consequential decisions for modern engineering organizations:
 
-```mermaid
-graph TD
+<ArchitectureDiagram
+  title="Microservices Container Ingress & Routing"
+  diagram={`graph TD
     Client([Internet Traffic]) -->|HTTPS| ALB[Application Load Balancer]
     
     subgraph Microservices [Container Orchestration Layer]
@@ -42,8 +45,8 @@ graph TD
     style ALB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
     style SvcUsers fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff
     style SvcOrders fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff
-    style SvcPayments fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff
-```
+    style SvcPayments fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff`}
+/>
 
 ---
 

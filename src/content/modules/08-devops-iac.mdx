@@ -22,11 +22,14 @@ learningOutcomes:
   - "Manage secrets and dynamic application configurations securely with Systems Manager Parameter Store."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## The Zero-Downtime Deployment Lifecycle
 In modern high-availability environments, code must be deployed continuously without dropping a single active customer HTTP connection:
 
-```mermaid
-graph LR
+<ArchitectureDiagram
+  title="Automated GitOps & Blue/Green Deployment Pipeline"
+  diagram={`graph LR
     Git([Git Push to Main]) --> CP[AWS CodePipeline]
     CP -->|Build & Dockerize| CB[AWS CodeBuild]
     CB -->|Publish Artifact| ECR[(Amazon ECR)]
@@ -39,8 +42,8 @@ graph LR
 
     style CP fill:#18223B,stroke:#34D399,stroke-width:2px,color:#fff
     style Green fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
-    style Blue fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
-```
+    style Blue fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+/>
 
 ---
 

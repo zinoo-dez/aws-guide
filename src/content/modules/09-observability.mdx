@@ -21,11 +21,14 @@ learningOutcomes:
   - "Implement continuous FinOps monitoring to detect runaway Lambda loops and unattached cloud storage."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## Observability vs Monitoring
 Monitoring tells you *when* a system is failing; Observability allows you to understand *why* a complex, distributed failure mode is occurring:
 
-```mermaid
-graph TD
+<ArchitectureDiagram
+  title="Distributed Observability & Autonomous Self-Healing"
+  diagram={`graph TD
     App[Distributed Microservices] -->|W3C Trace Context| XRay[AWS X-Ray]
     App -->|Structured JSON Logs| CWLogs[CloudWatch Logs Insights]
     App -->|Custom High-Res Metrics| CWMetrics[CloudWatch Metrics]
@@ -38,8 +41,8 @@ graph TD
 
     style CWMetrics fill:#18223B,stroke:#FB7185,stroke-width:2px,color:#fff
     style EventBridge fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
-    style HealingLambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
-```
+    style HealingLambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+/>
 
 ---
 

@@ -21,6 +21,8 @@ learningOutcomes:
   - "Implement write-through and cache-aside caching patterns in ElastiCache Redis."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## The Database Selection Framework
 Modern cloud architectures rarely rely on a single database. Instead, they leverage **polyglot persistence**:
 
@@ -30,8 +32,9 @@ Modern cloud architectures rarely rely on a single database. Instead, they lever
 | **Amazon DynamoDB** | Single-digit millisecond latency at any scale, serverless pay-per-request, predictable partitioning. | Automatic partition scaling based on Partition Key (PK) hash. | Shopping carts, session states, user profiles, gaming telemetry, metadata indexes. |
 | **Amazon ElastiCache (Redis)** | Microsecond in-memory response times, atomic counters, Sorted Sets, Pub/Sub. | Multi-node cluster with in-memory replication across AZs. | Real-time leaderboards, rate limiters, session stores, hot database query cache. |
 
-```mermaid
-graph TD
+<ArchitectureDiagram
+  title="Polyglot Persistence & Database Tier Architecture"
+  diagram={`graph TD
     App[Application Tier / Lambdas] -->|Connection Pool Gatekeeper| Proxy[AWS RDS Proxy]
     Proxy -->|ACID Writes & Transactions| Primary[Aurora Serverless v2 Primary]
     Primary -.->|Storage Level Replication < 10ms| Replica[Aurora Read Replica]
@@ -42,8 +45,8 @@ graph TD
 
     style Primary fill:#18223B,stroke:#38BDF8,stroke-width:2px,color:#fff
     style DDB fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
-    style Redis fill:#101728,stroke:#FB7185,stroke-width:1px,color:#fff
-```
+    style Redis fill:#101728,stroke:#FB7185,stroke-width:1px,color:#fff`}
+/>
 
 ---
 

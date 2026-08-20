@@ -1,33 +1,36 @@
 ---
 moduleNumber: 2
-title: "Compute Basics: Virtual Machines & Scaling"
-tagline: "From Single Virtual Servers to Multi-AZ Auto Scaling Fleets"
-description: "Master traditional application hosting on AWS. Learn how to architect resilient EC2 workloads with Auto Scaling Groups (ASG), Application Load Balancers (ALB), Elastic Block Store (EBS), and Elastic Beanstalk."
-theme: "Compute, High Availability & Auto-Scaling"
+title: "Compute Fundamentals & Auto Scaling"
+tagline: "Stateless Elasticity: EC2, Application Load Balancers & Auto Scaling Groups"
+description: "Master horizontal scaling and compute elasticity on AWS. Learn how to architect multi-AZ compute clusters behind Application Load Balancers (ALBs), configure dynamic Auto Scaling policies, and decouple server state."
+theme: "Compute Architecture & High-Availability Scaling"
 keyServices:
   - "Amazon EC2"
-  - "Auto Scaling Groups (ASG)"
   - "Application Load Balancer (ALB)"
-  - "AWS Elastic Beanstalk"
-  - "Amazon EBS"
+  - "Auto Scaling Groups (ASG)"
+  - "Amazon Machine Images (AMI)"
+  - "AWS Systems Manager Session Manager"
 difficulty: "Beginner"
 estimatedHours: 5
 icon: "server"
 order: 2
 learningOutcomes:
-  - "Design multi-AZ compute architectures that survive whole data-center power outages."
-  - "Configure ALB path-based routing, SSL termination, and health check intervals."
+  - "Architect stateless compute tiers across multiple Availability Zones to eliminate single points of failure."
+  - "Configure ALB target groups, health checks, and path-based routing rules."
   - "Establish dynamic Auto Scaling policies based on CPU utilization and ALB Request Count."
   - "Externalize server state into in-memory caches to allow seamless horizontal scaling."
 ---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
 
 ## The Evolution of Compute
 Running workloads on virtual machines requires making critical architectural decisions:
 1. **Vertical Scaling (Scale-Up)**: Upgrading from `t3.medium` to `c6i.4xlarge`. Simple, but introduces a single point of failure (SPOF) and a hard ceiling.
 2. **Horizontal Scaling (Scale-Out)**: Distributing stateless compute nodes behind an **Application Load Balancer (ALB)** across multiple Availability Zones. When one AZ experiences an outage, healthy targets in other AZs continue handling requests.
 
-```mermaid
-graph TD
+<ArchitectureDiagram
+  title="Multi-AZ Elastic Compute Topology"
+  diagram={`graph TD
     Client([Internet Traffic]) -->|HTTPS:443| ALB[Application Load Balancer]
     
     subgraph VPC [Amazon VPC - Multi-AZ]
@@ -51,11 +54,11 @@ graph TD
     ASG -.->|Scale Out / Scale In| AZ_B
 
     style ALB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
-    style ASG fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
-```
+    style ASG fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+/>
 
 ---
 
 ## Case Studies in This Module
 1. **[Legacy Monolith Web App Migration](/case-studies/monolith-web-migration)**: Re-hosting a stateful Django/Rails app to multi-AZ ASG with externalized Redis sessions.
-2. **[High-Traffic Internal Analytics Portal](/case-studies/internal-analytics-portal)**: Predictable enterprise portal with scheduled scaling, spot instance fleets, and EBS snapshot backups.
+2. **[High-Throughput E-Commerce Catalog Engine](/case-studies/ecommerce-catalog-orders)**: Handling flash-sale peak load surges using aggressive scale-out target tracking.

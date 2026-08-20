@@ -1,9 +1,9 @@
 ---
 moduleNumber: 1
-title: "Static Website & Global CDN"
-tagline: "Ultra-High Availability, Edge Caching, Zero-Maintenance Architecture"
-description: "Learn how to deliver web assets worldwide with sub-second latency, automated SSL/TLS certificates, Origin Access Control (OAC), and edge compute headers using S3, CloudFront, Route 53, and ACM."
-theme: "Content Delivery, Edge Security & Storage"
+title: "Global Static Website & CDN Architecture"
+tagline: "High-Performance, Zero-Maintenance Edge Distribution with S3, CloudFront & Route 53"
+description: "Learn how to build sub-50ms latency static websites and Single Page Applications (SPAs) with 99.99% availability using Amazon S3, CloudFront CDN, Route 53 DNS, and AWS Certificate Manager (ACM)."
+theme: "Edge Caching, DNS Routing & SSL Automation"
 keyServices:
   - "Amazon S3"
   - "Amazon CloudFront"
@@ -15,11 +15,13 @@ estimatedHours: 4
 icon: "globe"
 order: 1
 learningOutcomes:
-  - "Configure Amazon S3 private bucket storage with CloudFront Origin Access Control (OAC)."
-  - "Deploy custom domains with Route 53 Anycast DNS and automated ACM SSL renewal."
+  - "Configure private S3 buckets with Origin Access Control (OAC) to prevent unauthorized public reads."
+  - "Set up custom domain SSL/TLS certificate automation via ACM and Route 53 Alias records."
   - "Implement edge compute security headers (CSP, HSTS, X-Frame-Options) via CloudFront Functions."
   - "Design multi-region edge caching strategies to absorb massive traffic spikes with 99%+ cache hit rates."
 ---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
 
 ## The Static Architecture Philosophy
 In traditional hosting, web servers (e.g. Apache, Nginx) handle file I/O, TLS negotiation, and connection keep-alives. When traffic spikes 1,000x, servers run out of file descriptors and memory.
@@ -30,8 +32,9 @@ By decoupling **storage (Amazon S3)** from **global distribution (Amazon CloudFr
 - TLS negotiation is offloaded to the edge, dropping Time to First Byte (TTFB) significantly.
 - Costs collapse from $50–$300/month for VM clusters to mere cents per gigabyte transferred.
 
-```mermaid
-graph LR
+<ArchitectureDiagram
+  title="Global Edge Static Distribution Architecture"
+  diagram={`graph LR
     User([Global Users]) -->|Anycast DNS Query| R53[Amazon Route 53]
     R53 -->|Routed to Nearest Edge| CF[CloudFront Edge PoP]
     CF -->|Edge Compute: Headers / Rewrites| CFF[CloudFront Functions]
@@ -41,8 +44,8 @@ graph LR
 
     style CF fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
     style S3 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
-    style CFF fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
-```
+    style CFF fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+/>
 
 ---
 

@@ -21,6 +21,8 @@ learningOutcomes:
   - "Translate logical multi-tier diagrams into physical AWS VPC and subnet topologies."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## Why Foundations Matter
 Most developers jump straight into provisioning EC2 instances or Lambda functions without understanding the underlying physical constraints of cloud computing. 
 
@@ -35,8 +37,9 @@ When you design on AWS, every architectural choice is bound by:
 ## The Well-Architected Framework: The 6 Pillars
 Throughout every case study in this academy, architectures are evaluated against AWS's 6 core pillars:
 
-```mermaid
-graph TD
+<ArchitectureDiagram
+  title="The 6 Well-Architected Pillars"
+  diagram={`graph TD
     WAF[AWS Well-Architected Framework]
     WAF --> P1[1. Operational Excellence]
     WAF --> P2[2. Security & Least Privilege]
@@ -48,8 +51,8 @@ graph TD
     style WAF fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
     style P2 fill:#101728,stroke:#F59E0B,stroke-width:1px,color:#fff
     style P3 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
-    style P5 fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
-```
+    style P5 fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+/>
 
 ---
 

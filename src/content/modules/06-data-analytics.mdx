@@ -21,11 +21,14 @@ learningOutcomes:
   - "Automate metadata discovery and schema evolution using AWS Glue Crawlers and Glue Data Catalog."
 ---
 
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+
 ## The Serverless Lakehouse Architecture
 Traditional data warehouses require costly, always-on provisioned clusters. The modern AWS Lakehouse architecture decouples **storage (S3)** from **serverless compute (Athena, Redshift Serverless)**:
 
-```mermaid
-graph LR
+<ArchitectureDiagram
+  title="Serverless Lakehouse & Streaming Ingestion Pipeline"
+  diagram={`graph LR
     Source([Clickstream / IoT Events]) -->|Real-time Ingest| Kinesis[Amazon Kinesis Streams]
     Kinesis -->|Micro-batch 60s| Firehose[Kinesis Data Firehose]
     Firehose -->|Convert JSON to Snappy Parquet| S3Bronze[(S3 Lakehouse: Raw/Processed)]
@@ -37,8 +40,8 @@ graph LR
 
     style Kinesis fill:#18223B,stroke:#E879F9,stroke-width:2px,color:#fff
     style S3Bronze fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
-    style Athena fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
-```
+    style Athena fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+/>
 
 ---
 
