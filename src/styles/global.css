@@ -276,23 +276,19 @@ html:not([data-lang="my"]) .text-en {
   display: inline !important;
 }
 
-/* Language Toggle Flag Switcher */
-html[data-lang="my"] #language-toggle .lang-flag-my,
-html[data-lang="my"] #language-toggle .lang-text-my {
+/* Language Toggle Flag Switcher (Flag only) */
+html[data-lang="my"] #language-toggle .lang-flag-my {
   display: none !important;
 }
-html[data-lang="my"] #language-toggle .lang-flag-en,
-html[data-lang="my"] #language-toggle .lang-text-en {
-  display: inline !important;
+html[data-lang="my"] #language-toggle .lang-flag-en {
+  display: inline-block !important;
 }
 
-html:not([data-lang="my"]) #language-toggle .lang-flag-en,
-html:not([data-lang="my"]) #language-toggle .lang-text-en {
+html:not([data-lang="my"]) #language-toggle .lang-flag-en {
   display: none !important;
 }
-html:not([data-lang="my"]) #language-toggle .lang-flag-my,
-html:not([data-lang="my"]) #language-toggle .lang-text-my {
-  display: inline !important;
+html:not([data-lang="my"]) #language-toggle .lang-flag-my {
+  display: inline-block !important;
 }
 
 /* CSS Reset & Global Rules */
