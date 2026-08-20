@@ -77,15 +77,16 @@ const allStyles = Array.from(
 
     <!-- Case Studies Catalog Grid -->
     <div class="catalog-grid" id="catalog-cards-grid">
-      {sortedCaseStudies.map((cs) => {
+      {sortedCaseStudies.map((cs, idx) => {
         const serviceNames = cs.data.awsServices.map(s => s.name).join(' ');
         const serviceCategories = cs.data.awsServices.map(s => s.category).join(' ');
         const tags = cs.data.tags.join(' ');
         const styles = cs.data.architectureStyle.join(' ');
+        const staggerClass = `stagger-${(idx % 6) + 1}`;
 
         return (
           <div 
-            class="catalog-card-wrapper" 
+            class={`catalog-card-wrapper reveal-on-scroll ${staggerClass}`} 
             data-difficulty={cs.data.difficulty}
             data-categories={serviceCategories}
             data-services={serviceNames}

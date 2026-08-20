@@ -1,6 +1,7 @@
 ---
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import '../styles/animations.css';
 
@@ -29,6 +30,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guil
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
+    <ClientRouter />
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -76,9 +78,34 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guil
     <script>
       import { applyTranslations } from '../scripts/i18n';
 
-      // Auto-apply translations
+      function initScrollReveals() {
+        if (typeof window === 'undefined') return;
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -40px 0px', threshold: 0.1 }
+        );
+
+        document.querySelectorAll('.reveal-on-scroll:not(.is-revealed)').forEach((el) => {
+          observer.observe(el);
+        });
+      }
+
+      // Auto-apply translations & scroll observer
       applyTranslations();
-      document.addEventListener('astro:page-load', () => applyTranslations());
+      initScrollReveals();
+
+      document.addEventListener('astro:page-load', () => {
+        applyTranslations();
+        initScrollReveals();
+      });
       async function renderAllMermaidDiagrams() {
         if (typeof window === 'undefined') return;
 

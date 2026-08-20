@@ -22,11 +22,12 @@ const caseStudies = await getCollection('caseStudies');
     </header>
 
     <div class="modules-grid-full">
-      {sortedModules.map((mod) => {
+      {sortedModules.map((mod, idx) => {
         const modCases = caseStudies.filter(c => c.data.moduleId === mod.id);
+        const staggerClass = `stagger-${(idx % 6) + 1}`;
 
         return (
-          <div class="module-full-card glass-card">
+          <div class={`module-full-card glass-card reveal-on-scroll ${staggerClass}`}>
             <div class="card-left">
               <div class="module-badge-row">
                 <span class="mod-pill">Module {mod.data.moduleNumber}</span>

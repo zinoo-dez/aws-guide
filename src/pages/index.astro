@@ -80,7 +80,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
       </div>
 
       <div class="tracks-grid">
-        <div class="track-card glass-card">
+        <div class="track-card glass-card reveal-on-scroll stagger-1">
           <div class="track-icon-box track-icon-orange">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
           </div>
@@ -95,7 +95,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
           <a href="/modules/03-serverless-apps" class="track-link" data-i18n="tracks.startServerless">Start Serverless Track →</a>
         </div>
 
-        <div class="track-card glass-card">
+        <div class="track-card glass-card reveal-on-scroll stagger-2">
           <div class="track-icon-box track-icon-cyan">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
           </div>
@@ -110,7 +110,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
           <a href="/modules/08-devops-iac" class="track-link" data-i18n="tracks.startDevops">Start DevOps Track →</a>
         </div>
 
-        <div class="track-card glass-card">
+        <div class="track-card glass-card reveal-on-scroll stagger-3">
           <div class="track-icon-box track-icon-purple">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
           </div>
@@ -131,7 +131,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   <!-- Complete Curriculum Grid -->
   <section class="curriculum-section">
     <div class="container">
-      <div class="section-header-row">
+      <div class="section-header-row reveal-on-scroll">
         <div>
           <span class="section-kicker" data-i18n="modules.kicker">Comprehensive Curriculum</span>
           <h2 class="section-title" data-i18n="modules.title">All 11 Learning Modules</h2>
@@ -143,10 +143,11 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
       </div>
 
       <div class="modules-grid">
-        {sortedModules.map((mod) => {
+        {sortedModules.map((mod, idx) => {
           const modCases = caseStudies.filter(c => c.data.moduleId === mod.id);
+          const staggerClass = `stagger-${(idx % 6) + 1}`;
           return (
-            <div class="module-card glass-card">
+            <div class={`module-card glass-card reveal-on-scroll ${staggerClass}`}>
               <div class="module-card-top">
                 <span class="module-pill">Module {mod.data.moduleNumber}</span>
                 <Badge variant="difficulty" type={mod.data.difficulty} size="sm" />

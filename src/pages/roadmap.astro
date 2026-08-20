@@ -28,7 +28,7 @@ const caseStudies = await getCollection('caseStudies');
         const isFoundation = mod.data.moduleNumber === 0;
 
         return (
-          <div class={`timeline-node ${isCapstone ? 'capstone-node' : ''} ${isFoundation ? 'foundation-node' : ''}`}>
+          <div class={`timeline-node reveal-on-scroll ${isCapstone ? 'capstone-node' : ''} ${isFoundation ? 'foundation-node' : ''}`}>
             <div class="timeline-marker">
               <span class="marker-number">{mod.data.moduleNumber}</span>
               {index < sortedModules.length - 1 && <div class="marker-line"></div>}
