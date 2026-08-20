@@ -261,6 +261,21 @@ html[data-theme="dark"] .moon-icon {
   display: none !important;
 }
 
+/* Dual-Language Text Visibility Rules */
+html[data-lang="my"] .text-en {
+  display: none !important;
+}
+html[data-lang="my"] .text-my {
+  display: inline !important;
+}
+
+html:not([data-lang="my"]) .text-my {
+  display: none !important;
+}
+html:not([data-lang="my"]) .text-en {
+  display: inline !important;
+}
+
 /* CSS Reset & Global Rules */
 *, *::before, *::after {
   box-sizing: border-box;

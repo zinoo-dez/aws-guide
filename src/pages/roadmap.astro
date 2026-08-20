@@ -2,28 +2,35 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Badge from '../components/ui/Badge.astro';
 import { getCollection } from 'astro:content';
+import { modulesMyanmar } from '../i18n/modules-my';
 
 const modules = await getCollection('modules');
-const sortedModules = [...modules].sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
 const caseStudies = await getCollection('caseStudies');
+
+// Sort modules by moduleNumber 0..10
+const sortedModules = [...modules].sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
 ---
 
 <BaseLayout 
-  title="Visual Learning Roadmap | AWS Architecture Guild"
-  description="Interactive step-by-step visual cloud architecture journey from Foundations (Module 0) to Advanced Enterprise Capstones (Module 10)."
+  title="Visual Learning Roadmap | AWS Architecture Guild" 
+  description="A step-by-step master curriculum progression covering 11 modules and 29+ real-world AWS architecture case studies."
 >
   <div class="roadmap-page container">
     <header class="roadmap-header">
-      <span class="section-kicker">Visual Curriculum Progression</span>
-      <h1 class="roadmap-title">The Cloud Architect Journey</h1>
+      <h1 class="roadmap-title">
+        <span class="text-en">AWS System Design Roadmap</span>
+        <span class="text-my" hidden>AWS စနစ်ဒီဇိုင်း လေ့လာမှု လမ်းညွှန်မြေပုံ</span>
+      </h1>
       <p class="roadmap-subtitle">
-        Follow the structured path from mental models and serverless primitives to enterprise multi-region active-active system design.
+        <span class="text-en">Follow the structured path from mental models and serverless primitives to enterprise multi-region active-active system design.</span>
+        <span class="text-my" hidden>အခြေခံ Mental Models မှသည် ကမ္ဘာလုံးဆိုင်ရာ Multi-Region စနစ်များအထိ အဆင့်ဆင့် လေ့လာနိုင်သော လမ်းညွှန်။</span>
       </p>
     </header>
 
     <div class="roadmap-timeline">
       {sortedModules.map((mod, index) => {
         const modCases = caseStudies.filter(c => c.data.moduleId === mod.id);
+        const myMod = modulesMyanmar[mod.id] || null;
         const isCapstone = mod.data.moduleNumber === 10;
         const isFoundation = mod.data.moduleNumber === 0;
 
@@ -38,19 +45,31 @@ const caseStudies = await getCollection('caseStudies');
               <div class="node-top-bar">
                 <span class="node-module-id">Module {mod.data.moduleNumber}</span>
                 <Badge variant="difficulty" type={mod.data.difficulty} size="sm" />
-                <span class="node-hours">{mod.data.estimatedHours} Hours</span>
+                <span class="node-hours">{mod.data.estimatedHours} <span data-i18n="modules.hours">Hours</span></span>
               </div>
 
               <h2 class="node-title">
-                <a href={`/modules/${mod.id}`}>{mod.data.title}</a>
+                <a href={`/modules/${mod.id}`}>
+                  <span class="text-en">{mod.data.title}</span>
+                  <span class="text-my" hidden>{myMod?.title || mod.data.title}</span>
+                </a>
               </h2>
-              <p class="node-tagline">{mod.data.tagline}</p>
-              <p class="node-desc">{mod.data.description}</p>
+              <p class="node-tagline">
+                <span class="text-en">{mod.data.tagline}</span>
+                <span class="text-my" hidden>{myMod?.tagline || mod.data.tagline}</span>
+              </p>
+              <p class="node-desc">
+                <span class="text-en">{mod.data.description}</span>
+                <span class="text-my" hidden>{myMod?.description || mod.data.description}</span>
+              </p>
 
               <!-- Learning Outcomes -->
               <div class="outcomes-box">
-                <span class="outcomes-title">Core Outcomes:</span>
-                <ul class="outcomes-list">
+                <span class="outcomes-title">
+                  <span class="text-en">Core Outcomes:</span>
+                  <span class="text-my" hidden>ရရှိမည့် စွမ်းရည်များ:</span>
+                </span>
+                <ul class="outcomes-list text-en">
                   {mod.data.learningOutcomes.slice(0, 3).map(outcome => (
                     <li>
                       <span class="outcome-check">✓</span>
@@ -58,6 +77,16 @@ const caseStudies = await getCollection('caseStudies');
                     </li>
                   ))}
                 </ul>
+                {myMod && (
+                  <ul class="outcomes-list text-my" hidden>
+                    {myMod.learningOutcomes.slice(0, 3).map(outcome => (
+                      <li>
+                        <span class="outcome-check">✓</span>
+                        <span>{outcome}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <!-- Case Studies Under This Module -->

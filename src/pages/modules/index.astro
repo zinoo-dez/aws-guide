@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Badge from '../../components/ui/Badge.astro';
 import { getCollection } from 'astro:content';
+import { modulesMyanmar } from '../../i18n/modules-my';
 
 const modules = await getCollection('modules');
 const sortedModules = [...modules].sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
@@ -14,16 +15,21 @@ const caseStudies = await getCollection('caseStudies');
 >
   <div class="modules-index-page container">
     <header class="page-header">
-      <span class="section-kicker">Curriculum Directory</span>
-      <h1 class="page-title">All 11 Learning Modules</h1>
+      <span class="section-kicker" data-i18n="modules.kicker">Curriculum Directory</span>
+      <h1 class="page-title">
+        <span class="text-en">All 11 Learning Modules</span>
+        <span class="text-my" hidden>သင်ခန်းစာ Modules ၁၁ ခုလုံး</span>
+      </h1>
       <p class="page-subtitle">
-        Each module covers an essential domain of the AWS cloud ecosystem through core concepts and hands-on production case studies.
+        <span class="text-en">Each module covers an essential domain of the AWS cloud ecosystem through core concepts and hands-on production case studies.</span>
+        <span class="text-my" hidden>AWS Cloud စနစ်၏ အဓိကနယ်ပယ်များကို အခြေခံသဘောတရားများမှသည် လက်တွေ့ Case Studies များအထိ အဆင့်ဆင့် လေ့လာနိုင်ပါသည်။</span>
       </p>
     </header>
 
     <div class="modules-grid-full">
       {sortedModules.map((mod, idx) => {
         const modCases = caseStudies.filter(c => c.data.moduleId === mod.id);
+        const myMod = modulesMyanmar[mod.id] || null;
         const staggerClass = `stagger-${(idx % 6) + 1}`;
 
         return (
@@ -32,14 +38,23 @@ const caseStudies = await getCollection('caseStudies');
               <div class="module-badge-row">
                 <span class="mod-pill">Module {mod.data.moduleNumber}</span>
                 <Badge variant="difficulty" type={mod.data.difficulty} size="sm" />
-                <span class="mod-time">{mod.data.estimatedHours} Hours</span>
+                <span class="mod-time">{mod.data.estimatedHours} <span data-i18n="modules.hours">Hours</span></span>
               </div>
 
               <h2 class="mod-title">
-                <a href={`/modules/${mod.id}`}>{mod.data.title}</a>
+                <a href={`/modules/${mod.id}`}>
+                  <span class="text-en">{mod.data.title}</span>
+                  <span class="text-my" hidden>{myMod?.title || mod.data.title}</span>
+                </a>
               </h2>
-              <p class="mod-tagline">{mod.data.tagline}</p>
-              <p class="mod-desc">{mod.data.description}</p>
+              <p class="mod-tagline">
+                <span class="text-en">{mod.data.tagline}</span>
+                <span class="text-my" hidden>{myMod?.tagline || mod.data.tagline}</span>
+              </p>
+              <p class="mod-desc">
+                <span class="text-en">{mod.data.description}</span>
+                <span class="text-my" hidden>{myMod?.description || mod.data.description}</span>
+              </p>
 
               <div class="mod-services-wrap">
                 {mod.data.keyServices.map(svc => (
@@ -49,7 +64,7 @@ const caseStudies = await getCollection('caseStudies');
             </div>
 
             <div class="card-right">
-              <span class="cases-count-label">{modCases.length} Included Case Studies</span>
+              <span class="cases-count-label">{modCases.length} <span data-i18n="modules.cases">Included Case Studies</span></span>
               <div class="case-links-list">
                 {modCases.map(cs => (
                   <a href={`/case-studies/${cs.id}`} class="mini-case-item">
@@ -60,7 +75,7 @@ const caseStudies = await getCollection('caseStudies');
               </div>
 
               <a href={`/modules/${mod.id}`} class="btn btn-primary btn-block">
-                <span>Explore Module {mod.data.moduleNumber}</span>
+                <span><span data-i18n="modules.explore">Explore Module</span> {mod.data.moduleNumber}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </a>
             </div>

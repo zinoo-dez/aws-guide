@@ -1,7 +1,8 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
 import ModuleLayout from '../../layouts/ModuleLayout.astro';
 import CaseStudyCard from '../../components/case-study/CaseStudyCard.astro';
+import { modulesMyanmar } from '../../i18n/modules-my';
 
 export async function getStaticPaths() {
   const modules = await getCollection('modules');
@@ -11,12 +12,17 @@ export async function getStaticPaths() {
   }));
 }
 
+interface Props {
+  mod: CollectionEntry<'modules'>;
+}
+
 const { mod } = Astro.props;
 const { Content } = await render(mod);
 
 const allModules = await getCollection('modules');
 const allCaseStudies = await getCollection('caseStudies');
 const moduleCases = allCaseStudies.filter((c) => c.data.moduleId === mod.id);
+const myContent = modulesMyanmar[mod.id] || null;
 
 const moduleInfoList = allModules.map((m) => ({
   id: m.id,
@@ -45,14 +51,131 @@ const caseInfoList = allCaseStudies.map((c) => ({
   allModules={moduleInfoList}
   allCaseStudies={caseInfoList}
 >
-  <!-- Rendered Module Markdown -->
-  <Content />
+  <!-- Curriculum Language Tabs -->
+  <div class="module-lang-tabs-bar">
+    <div class="lang-tabs-group" role="tablist">
+      <button type="button" class="module-tab-btn" data-target="en" role="tab">
+        <span class="tab-flag">🇬🇧</span>
+        <span>English Curriculum</span>
+      </button>
+      <button type="button" class="module-tab-btn active" data-target="my" role="tab">
+        <span class="tab-flag">🇲🇲</span>
+        <span>မြန်မာဘာသာ သင်ခန်းစာ လမ်းညွှန်</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- English Content View -->
+  <div class="curriculum-lang-view view-en" id="view-en" hidden>
+    <div class="markdown-body">
+      <Content />
+    </div>
+  </div>
+
+  <!-- Myanmar Content View -->
+  {myContent && (
+    <div class="curriculum-lang-view view-my active-view" id="view-my">
+      <div class="my-curriculum-container">
+        <!-- Myanmar Hero Banner -->
+        <div class="my-hero-card glass-card">
+          <div class="my-hero-top">
+            <span class="my-tagline-badge">Module {myContent.moduleNumber} သင်ရိုးမာတိကာ</span>
+            <span class="my-theme-pill">{myContent.theme}</span>
+          </div>
+          <h2 class="my-module-heading">{myContent.title}</h2>
+          <p class="my-module-subtext">{myContent.tagline}</p>
+          <div class="my-desc-box">
+            <p>{myContent.description}</p>
+          </div>
+        </div>
+
+        <!-- Learning Outcomes -->
+        <div class="my-section-block">
+          <div class="my-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <h3>ရရှိမည့် အဓိက ဗိသုကာဆိုင်ရာ ကျွမ်းကျင်မှုများ (Learning Outcomes)</h3>
+          </div>
+          <div class="my-outcomes-grid">
+            {myContent.learningOutcomes.map((outcome, idx) => (
+              <div class="my-outcome-item">
+                <div class="outcome-num-badge">{idx + 1}</div>
+                <p class="outcome-text">{outcome}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Overview & Mental Models -->
+        <div class="my-section-block">
+          <div class="my-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <h3>အခြေခံ သဘောတရားနှင့် စဉ်းစားပုံ Mental Models</h3>
+          </div>
+          <div class="my-paragraphs-box">
+            {myContent.overview.map((para) => (
+              <p>{para}</p>
+            ))}
+          </div>
+        </div>
+
+        <!-- Key Concepts Cards Grid -->
+        <div class="my-section-block">
+          <div class="my-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <h3>အဓိက ဗိသုကာ သဘောတရားများနှင့် မဏ္ဍိုင်များ (Key Architecture Concepts)</h3>
+          </div>
+          <div class="my-concepts-grid">
+            {myContent.keyConcepts.map((concept) => (
+              <div class="my-concept-card glass-card">
+                <h4 class="concept-title">{concept.title}</h4>
+                <p class="concept-desc">{concept.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Production Rules Box -->
+        <div class="my-section-block">
+          <div class="my-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <h3>Production စနစ်များတွင် မဖြစ်မနေ လိုက်နာရမည့် Golden Rules</h3>
+          </div>
+          <div class="my-rules-card">
+            <ul class="my-rules-list">
+              {myContent.productionRules.map((rule) => (
+                <li>
+                  <span class="rule-star">★</span>
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
 
   <!-- Associated Case Studies Section -->
   <section class="module-cases-section">
     <div class="section-title-row">
-      <h2>Hands-On Case Studies in Module {mod.data.moduleNumber}</h2>
-      <span class="cases-count-badge">{moduleCases.length} Studies</span>
+      <div class="cases-title-group">
+        <h2 data-i18n="modules.cases">Hands-On Case Studies</h2>
+        <p class="cases-section-sub">လက်တွေ့ လေ့လာနိုင်သော Case Studies များ</p>
+      </div>
+      <span class="cases-count-badge">{moduleCases.length} Case Studies</span>
     </div>
 
     <div class="module-cases-grid">
@@ -75,6 +198,257 @@ const caseInfoList = allCaseStudies.map((c) => ({
 </ModuleLayout>
 
 <style>
+  /* Language Tabs Bar */
+  .module-lang-tabs-bar {
+    margin-bottom: var(--space-8);
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .lang-tabs-group {
+    display: inline-flex;
+    padding: 4px;
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-full);
+    gap: 4px;
+  }
+
+  .module-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-full);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .module-tab-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .module-tab-btn.active {
+    background: var(--bg-surface-1);
+    color: var(--aws-orange);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .curriculum-lang-view[hidden] {
+    display: none;
+  }
+
+  /* Myanmar Curriculum Layout */
+  .my-curriculum-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .my-hero-card {
+    padding: var(--space-6);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-left: 4px solid var(--aws-orange);
+    border-radius: var(--radius-lg);
+  }
+
+  .my-hero-top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .my-tagline-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+  }
+
+  .my-theme-pill {
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    background: var(--bg-surface-2);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .my-module-heading {
+    font-size: 1.6rem;
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+    line-height: 1.35;
+  }
+
+  .my-module-subtext {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-4);
+    line-height: 1.5;
+  }
+
+  .my-desc-box {
+    background: var(--bg-surface-2);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .my-desc-box p {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .my-section-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .my-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--aws-orange);
+  }
+
+  .my-section-header h3 {
+    font-size: 1.25rem;
+    color: var(--text-display);
+    margin: 0;
+  }
+
+  .my-outcomes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .my-outcome-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+  }
+
+  .outcome-num-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--cat-compute-bg);
+    color: var(--cat-compute);
+    border: 1px solid var(--cat-compute-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .outcome-text {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .my-paragraphs-box {
+    padding: var(--space-5);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .my-paragraphs-box p {
+    font-size: 0.925rem;
+    color: var(--text-primary);
+    line-height: 1.75;
+    margin: 0;
+  }
+
+  .my-concepts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .my-concept-card {
+    padding: var(--space-5);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+  }
+
+  .concept-title {
+    font-size: 1rem;
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+  }
+
+  .concept-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .my-rules-card {
+    padding: var(--space-5);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    border-radius: var(--radius-md);
+  }
+
+  .my-rules-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .my-rules-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .rule-star {
+    color: var(--aws-orange);
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Associated Cases */
   .module-cases-section {
     margin-top: var(--space-12);
     padding-top: var(--space-8);
@@ -88,12 +462,18 @@ const caseInfoList = allCaseStudies.map((c) => ({
     margin-bottom: var(--space-6);
   }
 
-  .section-title-row h2 {
+  .cases-title-group h2 {
     font-size: 1.4rem;
     color: var(--text-display);
-    margin: 0;
+    margin: 0 0 0.2rem 0;
     border: none;
     padding: 0;
+  }
+
+  .cases-section-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
   }
 
   .cases-count-badge {
@@ -102,13 +482,72 @@ const caseInfoList = allCaseStudies.map((c) => ({
     color: var(--aws-orange);
     background: var(--aws-orange-bg);
     border: 1px solid var(--aws-orange-border);
-    padding: 0.2rem 0.6rem;
+    padding: 0.25rem 0.75rem;
     border-radius: var(--radius-full);
   }
 
   .module-cases-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-6);
   }
 </style>
+
+<script>
+  import { getStoredLanguage } from '../../scripts/i18n';
+
+  function setupModuleLanguageSwitch() {
+    const tabBtns = document.querySelectorAll('.module-tab-btn');
+    const viewEn = document.getElementById('view-en');
+    const viewMy = document.getElementById('view-my');
+
+    function switchView(lang: 'en' | 'my') {
+      tabBtns.forEach(btn => {
+        if (btn.getAttribute('data-target') === lang) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      if (lang === 'my' && viewMy) {
+        viewMy.removeAttribute('hidden');
+        viewMy.classList.add('active-view');
+        if (viewEn) {
+          viewEn.setAttribute('hidden', '');
+          viewEn.classList.remove('active-view');
+        }
+      } else {
+        if (viewEn) {
+          viewEn.removeAttribute('hidden');
+          viewEn.classList.add('active-view');
+        }
+        if (viewMy) {
+          viewMy.setAttribute('hidden', '');
+          viewMy.classList.remove('active-view');
+        }
+      }
+    }
+
+    // Set initial view based on stored language (default to my if active)
+    const initialLang = getStoredLanguage();
+    switchView(initialLang === 'en' ? 'en' : 'my');
+
+    // Click handler for tabs
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-target') as 'en' | 'my';
+        switchView(target);
+      });
+    });
+
+    // Listen to global language change events
+    window.addEventListener('lang-changed', ((e: CustomEvent) => {
+      const lang = e.detail?.lang || 'en';
+      switchView(lang === 'my' ? 'my' : 'en');
+    }) as EventListener);
+  }
+
+  setupModuleLanguageSwitch();
+  document.addEventListener('astro:page-load', setupModuleLanguageSwitch);
+</script>
