@@ -453,6 +453,32 @@ blockquote strong {
   color: var(--text-primary);
 }
 
+.diagram-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.diagram-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.775rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.diagram-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
 .diagram-viewport {
   position: relative;
   min-height: 240px;
@@ -468,11 +494,44 @@ blockquote strong {
   width: 100%;
   display: flex;
   justify-content: center;
+  transition: transform 0.15s ease-out;
+  transform-origin: center center;
 }
 
-.mermaid svg {
+.mermaid-target svg, .mermaid svg {
   max-width: 100% !important;
   height: auto !important;
+  min-height: 180px;
+}
+
+.diagram-loading-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.diagram-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-medium);
+  border-top-color: var(--aws-orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.diagram-caption {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  background: var(--bg-surface-2);
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+  margin: 0;
 }
 
 /* Focus Outline */

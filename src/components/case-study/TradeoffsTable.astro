@@ -128,28 +128,41 @@ const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Ast
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-2);
+    gap: var(--space-3);
   }
 
   .option-name {
     font-size: 0.95rem;
+    font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+    line-height: 1.35;
+    flex: 1;
+    min-width: 0;
   }
 
   .chosen-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.2rem 0.55rem;
+    letter-spacing: 0.04em;
+    padding: 0.25rem 0.65rem;
     background: var(--aws-orange);
-    color: #FFFFFF;
+    color: #06090F;
     border-radius: var(--radius-full);
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1;
+    box-shadow: 0 0 10px rgba(255, 153, 0, 0.35);
   }
 
-  :root:not([data-theme="light"]) .chosen-badge {
-    color: #000000;
+  :root[data-theme="light"] .chosen-badge {
+    background: var(--aws-orange);
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.25);
   }
 
   .tradeoff-card-body {

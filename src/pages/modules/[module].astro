@@ -495,6 +495,7 @@ const caseInfoList = allCaseStudies.map((c) => ({
 
 <script>
   import { getStoredLanguage } from '../../scripts/i18n';
+  import { renderAllDiagrams } from '../../scripts/mermaid';
 
   function setupModuleLanguageSwitch() {
     const tabBtns = document.querySelectorAll('.module-tab-btn');
@@ -521,6 +522,7 @@ const caseInfoList = allCaseStudies.map((c) => ({
         if (viewEn) {
           viewEn.removeAttribute('hidden');
           viewEn.classList.add('active-view');
+          renderAllDiagrams();
         }
         if (viewMy) {
           viewMy.setAttribute('hidden', '');

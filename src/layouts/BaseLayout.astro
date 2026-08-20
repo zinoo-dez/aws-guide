@@ -130,6 +130,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guid
 
     <script>
       import { applyTranslations } from '../scripts/i18n';
+      import { renderAllDiagrams } from '../scripts/mermaid';
 
       function initScrollReveals() {
         if (typeof window === 'undefined') return;
@@ -173,14 +174,20 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guid
         }
       }
 
-      // Auto-apply translations, scroll observer & service worker
+      // Auto-apply translations, scroll observer, mermaid diagrams & service worker
       applyTranslations();
       initScrollReveals();
       registerPwaServiceWorker();
+      renderAllDiagrams();
 
       document.addEventListener('astro:page-load', () => {
         applyTranslations();
         initScrollReveals();
+        renderAllDiagrams();
+      });
+
+      window.addEventListener('theme-changed', () => {
+        renderAllDiagrams();
       });
     </script>
   </body>
