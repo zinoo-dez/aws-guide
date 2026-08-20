@@ -1,17 +1,31 @@
 ---
+
 ---
 
-<button 
-  type="button" 
-  class="lang-toggle-btn" 
-  id="language-toggle" 
+<button
+  type="button"
+  class="lang-toggle-btn"
+  id="language-toggle"
   aria-label="Switch Language (English / မြန်မာ)"
   title="Switch Language (English / မြန်မာ)"
 >
-  <svg class="globe-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <svg
+    class="globe-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    <path
+      d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+    ></path>
   </svg>
   <span class="lang-current-label">EN</span>
 </button>
@@ -53,12 +67,12 @@
 </style>
 
 <script>
-  import { toggleLanguage, applyTranslations } from '../../scripts/i18n';
+  import { toggleLanguage, applyTranslations } from "../../scripts/i18n";
 
-  if (typeof window !== 'undefined') {
-    document.addEventListener('click', (e) => {
+  if (typeof window !== "undefined") {
+    document.addEventListener("click", (e) => {
       const target = e.target as HTMLElement | null;
-      const btn = target?.closest('#language-toggle');
+      const btn = target?.closest("#language-toggle");
       if (!btn) return;
 
       e.preventDefault();
@@ -66,7 +80,7 @@
     });
 
     applyTranslations();
-    document.addEventListener('astro:page-load', () => {
+    document.addEventListener("astro:page-load", () => {
       applyTranslations();
     });
   }
