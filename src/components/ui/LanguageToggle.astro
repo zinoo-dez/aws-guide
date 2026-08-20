@@ -55,17 +55,19 @@
 <script>
   import { toggleLanguage, applyTranslations } from '../../scripts/i18n';
 
-  function setupLangToggle() {
-    const btn = document.getElementById('language-toggle');
-    if (!btn) return;
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      const btn = target?.closest('#language-toggle');
+      if (!btn) return;
 
-    btn.addEventListener('click', () => {
+      e.preventDefault();
       toggleLanguage();
     });
 
     applyTranslations();
+    document.addEventListener('astro:page-load', () => {
+      applyTranslations();
+    });
   }
-
-  setupLangToggle();
-  document.addEventListener('astro:page-load', setupLangToggle);
 </script>

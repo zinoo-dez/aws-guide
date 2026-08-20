@@ -319,23 +319,23 @@
       }
     });
 
-    // Trigger buttons
-    document.querySelectorAll('[data-open-search]').forEach(btn => {
-      btn.addEventListener('click', openModal);
-    });
-
-    backdrop?.addEventListener('click', closeModal);
-    closeBtn?.addEventListener('click', closeModal);
-
-    // Quick tag clicks
-    document.querySelectorAll('.quick-tag').forEach(tag => {
-      tag.addEventListener('click', () => {
+    // Trigger buttons via delegation
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('[data-open-search]')) {
+        e.preventDefault();
+        openModal();
+      } else if (target?.closest('#search-backdrop') || target?.closest('#search-close-btn')) {
+        e.preventDefault();
+        closeModal();
+      } else if (target?.closest('.quick-tag')) {
+        const tag = target.closest('.quick-tag') as HTMLElement;
         const query = tag.getAttribute('data-query') || '';
         if (input) {
           input.value = query;
           input.dispatchEvent(new Event('input'));
         }
-      });
+      }
     });
 
     // Live search query

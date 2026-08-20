@@ -59,11 +59,14 @@
 </style>
 
 <script>
-  function setupThemeToggle() {
-    const toggle = document.getElementById('theme-toggle');
-    if (!toggle) return;
+  // Robust global event listener for instant responsiveness
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      const toggle = target?.closest('#theme-toggle');
+      if (!toggle) return;
 
-    toggle.addEventListener('click', () => {
+      e.preventDefault();
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
       const newTheme = currentTheme === 'light' ? 'dark' : 'light';
       
@@ -72,7 +75,4 @@
       window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
     });
   }
-
-  setupThemeToggle();
-  document.addEventListener('astro:page-load', setupThemeToggle);
 </script>
