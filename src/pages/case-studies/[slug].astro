@@ -1,0 +1,52 @@
+---
+import { getCollection, render } from 'astro:content';
+import CaseStudyLayout from '../../layouts/CaseStudyLayout.astro';
+
+export async function getStaticPaths() {
+  const caseStudies = await getCollection('caseStudies');
+  return caseStudies.map((cs) => ({
+    params: { slug: cs.id },
+    props: { cs },
+  }));
+}
+
+const { cs } = Astro.props;
+const { Content } = await render(cs);
+
+const allModules = await getCollection('modules');
+const allCaseStudies = await getCollection('caseStudies');
+
+const currentMod = allModules.find((m) => m.id === cs.data.moduleId);
+
+const moduleInfoList = allModules.map((m) => ({
+  id: m.id,
+  moduleNumber: m.data.moduleNumber,
+  title: m.data.title,
+  theme: m.data.theme,
+}));
+
+const caseInfoList = allCaseStudies.map((c) => ({
+  slug: c.id,
+  title: c.data.title,
+  moduleId: c.data.moduleId,
+  difficulty: c.data.difficulty,
+  estimatedMinutes: c.data.estimatedMinutes,
+}));
+---
+
+<CaseStudyLayout
+  title={cs.data.title}
+  summary={cs.data.summary}
+  moduleId={cs.data.moduleId}
+  moduleTitle={currentMod ? `Module ${currentMod.data.moduleNumber}: ${currentMod.data.title}` : cs.data.moduleId}
+  difficulty={cs.data.difficulty}
+  estimatedMinutes={cs.data.estimatedMinutes}
+  industry={cs.data.industry}
+  architectureStyle={cs.data.architectureStyle}
+  awsServices={cs.data.awsServices}
+  keyMetrics={cs.data.keyMetrics}
+  allModules={moduleInfoList}
+  allCaseStudies={caseInfoList}
+>
+  <Content />
+</CaseStudyLayout>

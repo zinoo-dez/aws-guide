@@ -1,0 +1,201 @@
+---
+moduleId: "00-foundations"
+title: "Diagram Literacy: Translating Logical Architecture to Physical Subnets"
+summary: "How to read, author, and map high-level cloud architecture boxes into concrete VPC CIDR blocks, route tables, and Availability Zones."
+difficulty: "Beginner"
+estimatedMinutes: 8
+industry: "Cloud Infrastructure"
+architectureStyle:
+  - "Networking"
+  - "VPC Topology"
+awsServices:
+  - name: "Amazon VPC"
+    category: "Networking"
+    role: "Logical network isolation for cloud resources."
+  - name: "Internet Gateway"
+    category: "Networking"
+    role: "Provides bidirectional internet routing for public subnets."
+  - name: "Route Tables"
+    category: "Networking"
+    role: "Determines packet routing paths between subnets and gateways."
+keyMetrics:
+  - label: "Deployment Errors"
+    value: "-80%"
+    trend: "down"
+  - label: "Security Audit Speed"
+    value: "3x Faster"
+    trend: "up"
+tags:
+  - "vpc"
+  - "subnets"
+  - "diagrams"
+  - "foundations"
+featured: false
+order: 3
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Deployment Misconfigurations", value: "-80%", trend: "down" },
+  { label: "Subnet Slicing Efficiency", value: "100%", trend: "up" },
+  { label: "Audit Readiness", value: "3x Faster", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    Junior engineers frequently view architecture diagrams as simple flowcharts connecting boxes. However, placing an RDS database in the same logical tier as a public web server without understanding subnet boundaries leads to severe security vulnerabilities.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Visual Clarity</strong>: Clearly distinguish between Edge, Public Ingress, Private Compute, and Isolated Data tiers.</li>
+    <li><strong>Multi-AZ Representation</strong>: Show redundant instances in at least two Availability Zones.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Logical-to-Physical Subnet Mapping"
+    diagram={`graph TD
+    Client([Internet User]) -->|Port 443| IGW[Internet Gateway]
+    
+    subgraph VPC [Amazon VPC: 10.0.0.0/16]
+        subgraph PublicSubnets [Public Tier: 10.0.1.0/24 & 10.0.2.0/24]
+            ALB[Application Load Balancer]
+            NAT[NAT Gateway]
+        end
+
+        subgraph PrivateAppSubnets [Private App Tier: 10.0.10.0/24 & 10.0.20.0/24]
+            App1[ECS Task - AZ A]
+            App2[ECS Task - AZ B]
+        end
+
+        subgraph IsolatedDBSubnets [Isolated Data Tier: 10.0.100.0/24 & 10.0.200.0/24]
+            DBPrimary[(Aurora Primary - AZ A)]
+            DBReplica[(Aurora Replica - AZ B)]
+        end
+    end
+
+    IGW --> ALB
+    ALB --> App1
+    ALB --> App2
+    App1 --> DBPrimary
+    App2 --> DBPrimary
+    DBPrimary -.->|Replication| DBReplica
+    App1 --> NAT
+
+    style PublicSubnets fill:#18223B,stroke:#FF9900,stroke-width:1px,color:#fff
+    style PrivateAppSubnets fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style IsolatedDBSubnets fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon VPC",
+      category: "Networking",
+      role: "Creates a dedicated virtual network isolated from other AWS tenants."
+    },
+    {
+      name: "Internet Gateway (IGW)",
+      category: "Networking",
+      role: "Enables public route tables to map public IPs to internet destinations."
+    },
+    {
+      name: "NAT Gateway",
+      category: "Networking",
+      role: "Allows private subnets to download software patches without accepting inbound internet connections."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Single Public Subnet Everything",
+      pros: ["Simplest setup", "No NAT gateway costs"],
+      cons: ["Critical security violation", "Databases directly reachable if security groups misconfigured"],
+      verdict: "Prohibited in enterprise architectures."
+    },
+    {
+      name: "Tiered Subnet Isolation (Chosen)",
+      isChosen: true,
+      pros: ["Defense-in-depth", "Databases physically unreachable from the internet", "Clear audit boundaries"],
+      cons: ["Requires NAT Gateway or VPC Endpoints for egress"],
+      verdict: "Standard best practice for enterprise workloads."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="CIDR Math Blueprint for /16 VPCs" badge="Network Planning">
+
+```
+VPC CIDR: 10.0.0.0/16 (65,536 Total IPs)
+├── Public Subnet AZ-A:   10.0.1.0/24  (251 usable IPs) -> Route to IGW
+├── Public Subnet AZ-B:   10.0.2.0/24  (251 usable IPs) -> Route to IGW
+├── Private App AZ-A:     10.0.10.0/24 (251 usable IPs) -> Route to NAT-A
+├── Private App AZ-B:     10.0.20.0/24 (251 usable IPs) -> Route to NAT-B
+├── Isolated DB AZ-A:     10.0.100.0/24(251 usable IPs) -> Local VPC Only
+└── Isolated DB AZ-B:     10.0.200.0/24(251 usable IPs) -> Local VPC Only
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Zero Inbound Exposure</strong> for persistent data stores.</li>
+    <li><strong>100% Alignment</strong> with AWS Well-Architected Security Pillar.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Golden Rule:</strong> Never draw an arrow on an architecture diagram without knowing the exact protocol, port, security group rule, and subnet routing table that enables it.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="diagram-literacy"
+    questions={[
+      {
+        question: "How many IP addresses are reserved by AWS in every VPC subnet?",
+        options: [
+          "0 IPs",
+          "2 IPs (Network and Broadcast)",
+          "5 IPs (.0 network, .1 router, .2 DNS, .3 reserved, .255 broadcast)",
+          "10 IPs"
+        ],
+        correctIndex: 2,
+        explanation: "AWS reserves the first 4 IP addresses and the last IP address in each subnet CIDR block (5 total)."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html" target="_blank" rel="noopener">VPC and Subnets Basics</a></li>
+  </ul>
+</section>

@@ -1,0 +1,207 @@
+---
+---
+
+<footer class="site-footer">
+  <div class="footer-inner container">
+    <div class="footer-top-grid">
+      <!-- Brand column -->
+      <div class="footer-brand-col">
+        <div class="brand-row">
+          <div class="logo-box">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#FF9900" stroke-width="2"/>
+              <path d="M2 17L12 22L22 17" stroke="#38BDF8" stroke-width="2"/>
+              <path d="M2 12L12 17L22 12" stroke="#10B981" stroke-width="2"/>
+            </svg>
+          </div>
+          <span class="footer-brand-title">AWS Architecture Guild</span>
+        </div>
+        <p class="footer-description">
+          A production-grade, problem-first static educational platform for learning cloud system design through real-world business case studies, trade-offs, and interactive architecture topologies.
+        </p>
+      </div>
+
+      <!-- Well-Architected Pillars -->
+      <div class="footer-col">
+        <h4 class="col-title">Well-Architected Pillars</h4>
+        <ul class="footer-links">
+          <li><span class="dot dot-orange"></span> Operational Excellence</li>
+          <li><span class="dot dot-amber"></span> Security & IAM Least Privilege</li>
+          <li><span class="dot dot-blue"></span> Reliability & Multi-AZ HA</li>
+          <li><span class="dot dot-emerald"></span> Performance Efficiency</li>
+          <li><span class="dot dot-purple"></span> Cost Optimization</li>
+          <li><span class="dot dot-cyan"></span> Sustainability in Cloud</li>
+        </ul>
+      </div>
+
+      <!-- Curriculum Links -->
+      <div class="footer-col">
+        <h4 class="col-title">Curriculum</h4>
+        <ul class="footer-links">
+          <li><a href="/roadmap">Visual Learning Roadmap</a></li>
+          <li><a href="/modules">All 11 Modules</a></li>
+          <li><a href="/case-studies">32+ Case Studies Catalog</a></li>
+          <li><a href="/services">AWS Services Index</a></li>
+          <li><a href="/about">Methodology & Framework</a></li>
+        </ul>
+      </div>
+
+      <!-- Resources -->
+      <div class="footer-col">
+        <h4 class="col-title">Official AWS Resources</h4>
+        <ul class="footer-links">
+          <li><a href="https://aws.amazon.com/architecture/" target="_blank" rel="noopener">AWS Architecture Center</a></li>
+          <li><a href="https://aws.amazon.com/architecture/well-architected/" target="_blank" rel="noopener">Well-Architected Framework</a></li>
+          <li><a href="https://aws.amazon.com/blogs/architecture/" target="_blank" rel="noopener">AWS Architecture Blog</a></li>
+          <li><a href="https://docs.aws.amazon.com/" target="_blank" rel="noopener">AWS Documentation</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="copyright-text">
+        © {new Date().getFullYear()} AWS Architecture Guild. Built with Astro & Static Design. Independent educational resource.
+      </p>
+      <div class="footer-bottom-links">
+        <a href="/roadmap">Roadmap</a>
+        <a href="/case-studies">Case Studies</a>
+        <a href="/about">About</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--bg-surface-1);
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-12) 0 var(--space-6);
+    margin-top: auto;
+  }
+
+  .footer-top-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr 1.2fr;
+    gap: var(--space-8);
+    margin-bottom: var(--space-8);
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .logo-box {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-brand-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-display);
+  }
+
+  .footer-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 360px;
+  }
+
+  .col-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+  }
+
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-links li {
+    font-size: 0.825rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .footer-links a {
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+  }
+
+  .footer-links a:hover {
+    color: var(--aws-orange);
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .dot-orange { background: #FF9900; }
+  .dot-amber { background: #F59E0B; }
+  .dot-blue { background: #38BDF8; }
+  .dot-emerald { background: #10B981; }
+  .dot-purple { background: #A78BFA; }
+  .dot-cyan { background: #06B6D4; }
+
+  .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .footer-bottom-links {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  .footer-bottom-links a {
+    color: var(--text-muted);
+  }
+
+  .footer-bottom-links a:hover {
+    color: var(--aws-orange);
+  }
+
+  @media (max-width: 900px) {
+    .footer-top-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .footer-top-grid {
+      grid-template-columns: 1fr;
+    }
+    .footer-bottom {
+      flex-direction: column;
+      gap: var(--space-3);
+      text-align: center;
+    }
+  }
+</style>

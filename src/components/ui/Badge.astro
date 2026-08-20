@@ -1,0 +1,122 @@
+---
+interface Props {
+  variant?: 'difficulty' | 'category' | 'style' | 'default';
+  type?: string;
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+}
+
+const { variant = 'default', type = '', size = 'md', class: className = '' } = Astro.props;
+
+// Determine colors based on type or variant
+const typeLower = type.toLowerCase();
+let colorClass = 'badge-default';
+
+if (variant === 'difficulty') {
+  if (typeLower === 'beginner') colorClass = 'badge-beginner';
+  else if (typeLower === 'intermediate') colorClass = 'badge-intermediate';
+  else if (typeLower === 'advanced') colorClass = 'badge-advanced';
+  else if (typeLower === 'expert') colorClass = 'badge-expert';
+} else if (variant === 'category') {
+  if (typeLower === 'compute') colorClass = 'badge-compute';
+  else if (typeLower === 'database') colorClass = 'badge-database';
+  else if (typeLower === 'networking') colorClass = 'badge-networking';
+  else if (typeLower === 'serverless') colorClass = 'badge-serverless';
+  else if (typeLower === 'analytics') colorClass = 'badge-analytics';
+  else if (typeLower === 'security') colorClass = 'badge-security';
+  else if (typeLower === 'devops') colorClass = 'badge-devops';
+  else if (typeLower === 'observability') colorClass = 'badge-observability';
+  else if (typeLower === 'storage') colorClass = 'badge-storage';
+  else if (typeLower === 'containers') colorClass = 'badge-containers';
+  else if (typeLower === 'iot') colorClass = 'badge-iot';
+  else if (typeLower === 'media') colorClass = 'badge-media';
+} else if (variant === 'style') {
+  colorClass = 'badge-style';
+}
+---
+
+<span class={`badge ${colorClass} badge-${size} ${className}`}>
+  <slot>{type}</slot>
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    transition: all var(--transition-fast);
+  }
+
+  .badge-sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  .badge-md {
+    font-size: 0.775rem;
+    padding: 0.3rem 0.75rem;
+  }
+
+  .badge-lg {
+    font-size: 0.875rem;
+    padding: 0.4rem 0.95rem;
+  }
+
+  /* Variant styles */
+  .badge-default {
+    background: var(--bg-surface-3);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .badge-style {
+    background: var(--bg-surface-2);
+    color: var(--text-primary);
+    border: 1px solid var(--border-medium);
+  }
+
+  /* Difficulty */
+  .badge-beginner {
+    background: var(--diff-beginner-bg);
+    color: var(--diff-beginner);
+    border: 1px solid var(--diff-beginner-border);
+  }
+
+  .badge-intermediate {
+    background: var(--diff-intermediate-bg);
+    color: var(--diff-intermediate);
+    border: 1px solid var(--diff-intermediate-border);
+  }
+
+  .badge-advanced {
+    background: var(--diff-advanced-bg);
+    color: var(--diff-advanced);
+    border: 1px solid var(--diff-advanced-border);
+  }
+
+  .badge-expert {
+    background: var(--diff-expert-bg);
+    color: var(--diff-expert);
+    border: 1px solid var(--diff-expert-border);
+  }
+
+  /* Categories */
+  .badge-compute { background: var(--cat-compute-bg); color: var(--cat-compute); border: 1px solid var(--cat-compute-border); }
+  .badge-database { background: var(--cat-database-bg); color: var(--cat-database); border: 1px solid var(--cat-database-border); }
+  .badge-networking { background: var(--cat-networking-bg); color: var(--cat-networking); border: 1px solid var(--cat-networking-border); }
+  .badge-serverless { background: var(--cat-serverless-bg); color: var(--cat-serverless); border: 1px solid var(--cat-serverless-border); }
+  .badge-analytics { background: var(--cat-analytics-bg); color: var(--cat-analytics); border: 1px solid var(--cat-analytics-border); }
+  .badge-security { background: var(--cat-security-bg); color: var(--cat-security); border: 1px solid var(--cat-security-border); }
+  .badge-devops { background: var(--cat-devops-bg); color: var(--cat-devops); border: 1px solid var(--cat-devops-border); }
+  .badge-observability { background: var(--cat-observability-bg); color: var(--cat-observability); border: 1px solid var(--cat-observability-border); }
+  .badge-storage { background: var(--cat-storage-bg); color: var(--cat-storage); border: 1px solid var(--cat-storage-border); }
+  .badge-containers { background: var(--cat-containers-bg); color: var(--cat-containers); border: 1px solid var(--cat-containers-border); }
+  .badge-iot { background: var(--cat-iot-bg); color: var(--cat-iot); border: 1px solid var(--cat-iot-border); }
+  .badge-media { background: var(--cat-media-bg); color: var(--cat-media); border: 1px solid var(--cat-media-border); }
+</style>

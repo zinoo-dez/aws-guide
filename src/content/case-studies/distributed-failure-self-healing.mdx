@@ -1,0 +1,195 @@
+---
+moduleId: "09-observability"
+title: "Automated Incident Detection & Self-Healing Telemetry Engine"
+summary: "Detecting production degradations with CloudWatch Composite Alarms, X-Ray distributed tracing, and executing automated Lambda self-healing."
+difficulty: "Advanced"
+estimatedMinutes: 9
+industry: "Fintech & SaaS SRE"
+architectureStyle:
+  - "Automated Self-Healing"
+  - "Distributed Tracing"
+awsServices:
+  - name: "Amazon CloudWatch Composite Alarms"
+    category: "Observability"
+    role: "Combines multiple metric alarms (p99 latency + 5XX error rate + CPU) to reduce alert fatigue."
+  - name: "AWS X-Ray"
+    category: "Observability"
+    role: "Provides distributed service maps and trace segment latency breakdowns."
+  - name: "Amazon EventBridge"
+    category: "Serverless"
+    role: "Routes alarm state changes to automated remediation Lambdas."
+  - name: "AWS Lambda"
+    category: "Compute"
+    role: "Executes automated remediation scripts (clears degraded cache nodes, restarts hung tasks)."
+keyMetrics:
+  - label: "MTTR"
+    value: "45s (from 35 mins)"
+    trend: "down"
+  - label: "Alert Fatigue Noise"
+    value: "-85%"
+    trend: "down"
+  - label: "Self-Healed Incidents"
+    value: "92%"
+    trend: "up"
+tags:
+  - "cloudwatch"
+  - "xray"
+  - "self-healing"
+  - "sre"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Mean Time to Recover (MTTR)", value: "45 seconds", trend: "down" },
+  { label: "False Alarm Noise", value: "-85%", trend: "down" },
+  { label: "Autonomous Self-Healing Rate", value: "92%", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An on-call engineering team suffered from severe alert fatigue: hundreds of individual CPU alerts woke engineers up at night for transient 10-second spikes that self-resolved. Conversely, when a complex cascading deadlock occurred between microservices, engineers spent 35 minutes manually combing through logs to locate the root cause.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Eliminate False Alarms</strong>: Alarms must only fire if both latency AND error rates breach SLOs simultaneously.</li>
+    <li><strong>Distributed Trace Context</strong>: Pinpoint exact bottleneck microservices within seconds using AWS X-Ray.</li>
+    <li><strong>Automated Self-Healing</strong>: Automatically flush degraded cache shards and recycle unhealthy tasks before human escalation.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Automated Telemetry & Self-Healing Remediation Architecture"
+    diagram={`graph TD
+    App[Microservices Fleet] -->|W3C Trace Headers| XRay[AWS X-Ray Distributed Tracing]
+    App -->|High-Resolution Metrics| CW[Amazon CloudWatch Metrics]
+    
+    subgraph AlarmsTier [Composite Alarm Engine]
+        Alarm1[Alarm: p99 Latency > 200ms]
+        Alarm2[Alarm: Error Rate > 2%]
+        CompAlarm{Composite Alarm: Alarm1 AND Alarm2 for 2m}
+    end
+
+    CW --> Alarm1
+    CW --> Alarm2
+    CompAlarm -->|State: ALARM| EventBridge[Amazon EventBridge]
+    
+    EventBridge -->|1. Immediate Self-Healing| HealerLambda[Remediation Lambda]
+    EventBridge -->|2. High-Severity Alert| PagerDuty[PagerDuty / Slack SRE Channel]
+    HealerLambda -->|Restart Task / Purge Cache| App
+
+    style CW fill:#18223B,stroke:#FB7185,stroke-width:2px,color:#fff
+    style CompAlarm fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style HealerLambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "CloudWatch Composite Alarms",
+      category: "Observability",
+      role: "Evaluates boolean logic (e.g. ALARM(HighLatency) AND ALARM(High5XX)) to eliminate single-metric false alarms."
+    },
+    {
+      name: "AWS X-Ray",
+      category: "Observability",
+      role: "Tracks HTTP request paths across API Gateway, Lambda, ECS, and DynamoDB, isolating slow SQL queries."
+    },
+    {
+      name: "AWS Lambda (Self-Healing)",
+      category: "Compute",
+      role: "Executes automated runbooks (e.g. cycling unhealthy container tasks) within seconds."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Individual Single-Metric CPU Alarms",
+      pros: ["Simple setup"],
+      cons: ["Extreme alert fatigue", "Pages engineers for harmless transient spikes", "No autonomous fix"],
+      verdict: "Causes on-call burnout."
+    },
+    {
+      name: "Composite Alarms + Autonomous Remediation (Chosen)",
+      isChosen: true,
+      pros: ["Zero noise for benign spikes", "Autonomous recovery in 45s", "Clear trace root cause in X-Ray"],
+      cons: ["Requires disciplined alarm rule engineering"],
+      verdict: "Modern SRE gold standard."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Composite Alarm CloudFormation Expression" badge="IaC Recipe">
+
+```
+AlarmRule: >
+  ALARM("prod-api-p99-latency-breached") AND
+  ALARM("prod-api-5xx-error-rate-breached") AND NOT
+  ALARM("prod-scheduled-backup-in-progress")
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>MTTR</strong>: Dropped from 35 minutes to <strong>45 seconds</strong> for 92% of known incident types.</li>
+    <li><strong>On-Call Pages</strong>: Decreased from 140 pages/week to <strong>6 actionable pages/week</strong>.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>SRE Principle:</strong> Never page a human engineer for an issue that a Lambda function can diagnose and remediate automatically in 30 seconds.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="distributed-failure-self-healing"
+    questions={[
+      {
+        question: "How do CloudWatch Composite Alarms drastically reduce alert fatigue for SRE teams?",
+        options: [
+          "They silence all alarms automatically after 5 PM.",
+          "They only transition to ALARM state when multiple underlying metric conditions (e.g. high latency AND high error rate) are true simultaneously.",
+          "They delete error logs from S3.",
+          "They replace AWS CloudTrail."
+        ],
+        correctIndex: 1,
+        explanation: "Composite Alarms use boolean logic (AND/OR/NOT) across multiple metric alarms, ensuring engineers are paged only when true customer impact occurs."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Composite_Alarm.html" target="_blank" rel="noopener">Creating CloudWatch Composite Alarms</a></li>
+  </ul>
+</section>

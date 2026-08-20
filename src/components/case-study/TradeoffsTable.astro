@@ -1,0 +1,213 @@
+---
+interface OptionComparison {
+  name: string;
+  isChosen?: boolean;
+  pros: string[];
+  cons: string[];
+  verdict: string;
+}
+
+interface Props {
+  title?: string;
+  options: OptionComparison[];
+}
+
+const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Astro.props;
+---
+
+<div class="tradeoffs-matrix-card glass-card">
+  <div class="tradeoffs-header">
+    <h3>{title}</h3>
+    <p class="tradeoffs-subtitle">Evaluating alternative approaches under real-world constraints</p>
+  </div>
+
+  <div class="tradeoffs-grid">
+    {options.map((opt) => (
+      <div class={`tradeoff-card ${opt.isChosen ? 'chosen-card' : ''}`}>
+        <div class="tradeoff-card-header">
+          <div class="tradeoff-title-row">
+            <h4 class="option-name">{opt.name}</h4>
+            {opt.isChosen && (
+              <span class="chosen-badge">✓ Chosen Design</span>
+            )}
+          </div>
+        </div>
+
+        <div class="tradeoff-card-body">
+          <div class="pros-section">
+            <span class="section-label pros-label">Advantages (Pros)</span>
+            <ul class="tradeoff-list">
+              {opt.pros.map((pro) => (
+                <li class="pro-item">
+                  <span class="icon-check">+</span>
+                  <span>{pro}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="cons-section">
+            <span class="section-label cons-label">Disadvantages (Cons / Trade-offs)</span>
+            <ul class="tradeoff-list">
+              {opt.cons.map((con) => (
+                <li class="con-item">
+                  <span class="icon-cross">−</span>
+                  <span>{con}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div class="tradeoff-verdict">
+          <strong>Architectural Verdict:</strong> {opt.verdict}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .tradeoffs-matrix-card {
+    margin: var(--space-6) 0;
+    padding: var(--space-6);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+  }
+
+  .tradeoffs-header {
+    margin-bottom: var(--space-4);
+  }
+
+  .tradeoffs-header h3 {
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+  }
+
+  .tradeoffs-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .tradeoffs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .tradeoff-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--transition-fast);
+  }
+
+  .chosen-card {
+    border-color: var(--aws-orange);
+    box-shadow: 0 0 20px rgba(255, 153, 0, 0.15);
+    background: var(--bg-surface-1);
+  }
+
+  .tradeoff-card-header {
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .chosen-card .tradeoff-card-header {
+    background: var(--aws-orange-bg);
+  }
+
+  .tradeoff-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .option-name {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .chosen-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.55rem;
+    background: var(--aws-orange);
+    color: #FFFFFF;
+    border-radius: var(--radius-full);
+  }
+
+  :root:not([data-theme="light"]) .chosen-badge {
+    color: #000000;
+  }
+
+  .tradeoff-card-body {
+    padding: var(--space-4);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .section-label {
+    display: block;
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+  }
+
+  .pros-label { color: var(--cat-compute); }
+  .cons-label { color: var(--cat-observability); }
+
+  .tradeoff-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tradeoff-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.825rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .icon-check {
+    color: var(--cat-compute);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .icon-cross {
+    color: var(--cat-observability);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .tradeoff-verdict {
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface-3);
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+</style>

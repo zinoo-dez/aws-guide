@@ -1,0 +1,151 @@
+---
+interface HeadingItem {
+  id: string;
+  text: string;
+  depth: number;
+}
+
+interface Props {
+  headings?: HeadingItem[];
+}
+
+const defaultSections = [
+  { id: 'business-problem', text: '1. Business Problem & Context' },
+  { id: 'requirements-constraints', text: '2. Requirements & Constraints' },
+  { id: 'architecture-overview', text: '3. Architecture & Diagram' },
+  { id: 'aws-services', text: '4. AWS Services Rationale' },
+  { id: 'trade-offs', text: '5. Key Design Trade-offs' },
+  { id: 'implementation', text: '6. Implementation Highlights' },
+  { id: 'results-metrics', text: '7. Results & Benchmarks' },
+  { id: 'takeaways', text: '8. Key Takeaways' },
+  { id: 'quiz', text: '9. Knowledge Retention Quiz' },
+  { id: 'resources', text: '10. Official AWS References' },
+];
+
+const { headings } = Astro.props;
+const items = (headings && headings.length > 0)
+  ? headings.map(h => ({ id: h.id, text: h.text }))
+  : defaultSections;
+---
+
+<nav class="toc-container" aria-label="Table of contents">
+  <div class="toc-header">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="8" y1="6" x2="21" y2="6"></line>
+      <line x1="8" y1="12" x2="21" y2="12"></line>
+      <line x1="8" y1="18" x2="21" y2="18"></line>
+      <line x1="3" y1="6" x2="3.01" y2="6"></line>
+      <line x1="3" y1="12" x2="3.01" y2="12"></line>
+      <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+    <span class="toc-title">On This Case Study</span>
+  </div>
+
+  <ul class="toc-list">
+    {items.map((item) => (
+      <li>
+        <a href={`#${item.id}`} class="toc-link" data-heading-id={item.id}>
+          {item.text}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .toc-container {
+    width: 100%;
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+  }
+
+  .toc-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--aws-orange);
+  }
+
+  .toc-title {
+    font-family: var(--font-display);
+    font-size: 0.775rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+  }
+
+  .toc-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc-link {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    line-height: 1.4;
+    transition: all var(--transition-fast);
+    border-left: 2px solid transparent;
+  }
+
+  .toc-link:hover {
+    color: var(--aws-orange);
+    background: var(--bg-surface-2);
+  }
+
+  .toc-link.active {
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border-left-color: var(--aws-orange);
+    font-weight: 600;
+  }
+</style>
+
+<script>
+  function setupTocScrollSpy() {
+    const links = document.querySelectorAll('.toc-link');
+    if (links.length === 0) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          links.forEach((link) => {
+            if (link.getAttribute('data-heading-id') === id) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+      });
+    }, {
+      rootMargin: '-80px 0px -70% 0px',
+      threshold: 0,
+    });
+
+    document.querySelectorAll('section[id], h2[id], h3[id], div[id]').forEach((el) => {
+      observer.observe(el);
+    });
+  }
+
+  setupTocScrollSpy();
+  document.addEventListener('astro:page-load', setupTocScrollSpy);
+</script>

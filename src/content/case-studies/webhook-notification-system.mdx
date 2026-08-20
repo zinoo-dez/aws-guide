@@ -1,0 +1,184 @@
+---
+moduleId: "03-serverless-apps"
+title: "Resilient Webhook Ingestion Engine: Buffering 10,000 Webhooks/Sec"
+summary: "Ingest third-party webhooks (Stripe, GitHub, Shopify) directly into Amazon SQS via API Gateway without intermediate compute to prevent traffic dropouts."
+difficulty: "Intermediate"
+estimatedMinutes: 7
+industry: "Fintech & Payments"
+architectureStyle:
+  - "Serverless"
+  - "Direct Integration"
+awsServices:
+  - name: "Amazon API Gateway"
+    category: "Serverless"
+    role: "Directly integrates with SQS using AWS Service Proxy (zero Lambda in the ingress path)."
+  - name: "Amazon SQS"
+    category: "Serverless"
+    role: "Buffers high-throughput webhook spikes with standard/FIFO queue durability."
+  - name: "AWS Lambda"
+    category: "Compute"
+    role: "Pulls batches of 10-50 webhooks to verify signatures and update databases."
+  - name: "Amazon DynamoDB"
+    category: "Database"
+    role: "Stores idempotent transaction records with TTL."
+keyMetrics:
+  - label: "Dropped Webhooks"
+    value: "0"
+    trend: "down"
+  - label: "Ingress p99 Latency"
+    value: "22ms"
+    trend: "down"
+  - label: "Compute Savings"
+    value: "45%"
+    trend: "down"
+tags:
+  - "api-gateway"
+  - "sqs"
+  - "webhooks"
+  - "idempotency"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Webhook Ingest Success", value: "100.00%", trend: "up" },
+  { label: "Ingress Response Time", value: "22ms", trend: "down" },
+  { label: "Spike Tolerance", value: "10,000+ / sec", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A payments platform integrates with external gateways (Stripe, Adyen). During major shopping events (Black Friday), payment gateways emit massive webhook bursts. The previous system placed a Lambda function directly behind API Gateway to write into a relational database; during spikes, Lambda connection exhaustion caused HTTP 500 errors, leading payment providers to disable webhook endpoints.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Zero Ingestion Failures</strong>: Never drop a webhook under any traffic spike.</li>
+    <li><strong>Sub-50ms Acknowledgment</strong>: Return <code>HTTP 200 OK</code> immediately to the caller.</li>
+    <li><strong>Strict Idempotency</strong>: Payment events must only be processed exactly once.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Direct SQS Service Proxy Ingestion Topology"
+    diagram={`graph LR
+    Caller([Payment Gateway Webhook]) -->|HTTPS POST: /webhook| APIGW[Amazon API Gateway]
+    APIGW -->|Direct AWS Service Proxy: SendMessage| SQS[(Amazon SQS Buffer Queue)]
+    APIGW -->|Immediate HTTP 200 OK in 20ms| Caller
+    
+    SQS -->|Batch Size: 25| Lambda[Idempotent Payment Worker]
+    Lambda -->|Conditional Write: EventID| DDB[(DynamoDB Idempotency Ledger)]
+    Lambda -->|Dead-Letter Queue on 3 Retries| DLQ[(Amazon SQS DLQ)]
+
+    style APIGW fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style SQS fill:#101728,stroke:#A78BFA,stroke-width:2px,color:#fff
+    style Lambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style DDB fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon API Gateway Service Proxy",
+      category: "Serverless",
+      role: "Pushes payloads directly to Amazon SQS using IAM role credentials, eliminating cold starts and intermediate Lambda execution costs."
+    },
+    {
+      name: "Amazon SQS",
+      category: "Serverless",
+      role: "Buffers up to billions of in-flight messages with configurable retention (up to 14 days)."
+    },
+    {
+      name: "Amazon DynamoDB",
+      category: "Database",
+      role: "Uses conditional put-item (attribute_not_exists) to guarantee idempotent processing."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "API Gateway -> Lambda -> Database",
+      pros: ["Simple synchronous debugging"],
+      cons: ["High concurrency exhausts DB connections", "Double billing (APIGW + Ingress Lambda + Worker Lambda)"],
+      verdict: "Fragile under massive traffic bursts."
+    },
+    {
+      name: "API Gateway Direct SQS Proxy -> Batch Lambda (Chosen)",
+      isChosen: true,
+      pros: ["Zero dropped webhooks", "Fastest response time (22ms)", "45% lower compute costs via batch processing"],
+      cons: ["Requires API Gateway VTL mapping template setup"],
+      verdict: "Best-in-class pattern for mission-critical webhook ingestion."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="API Gateway SQS Integration Request Template" badge="IaC Recipe">
+
+```
+Action=SendMessage&MessageBody=$util.urlEncode($input.body)&MessageAttribute.1.Name=webhook_source&MessageAttribute.1.Value.DataType=String&MessageAttribute.1.Value.StringValue=$input.params('x-webhook-provider')
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Zero Ingestion Loss</strong> during 12,000 webhooks/sec Black Friday surge.</li>
+    <li><strong>P99 Ingress Latency</strong> dropped from 420ms to <strong>22ms</strong>.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Serverless Design Pattern:</strong> If your Lambda function only exists to read a JSON payload and push it into an SQS queue or DynamoDB table, replace the Lambda with an API Gateway direct service integration.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="webhook-notification-system"
+    questions={[
+      {
+        question: "How do you enforce idempotency in DynamoDB when processing webhooks that may be retried by the sender?",
+        options: [
+          "By deleting old records before inserting new ones.",
+          "By using a Conditional PutItem with `attribute_not_exists(eventId)` on the primary key.",
+          "By querying the entire table before each write.",
+          "By setting DynamoDB table capacity to 1 WCU."
+        ],
+        correctIndex: 1,
+        explanation: "DynamoDB conditional expressions guarantee atomicity: if `attribute_not_exists(eventId)` fails, the transaction is safely rejected as a duplicate without overwriting state."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-aws-services.html" target="_blank" rel="noopener">API Gateway AWS Service Integrations</a></li>
+  </ul>
+</section>

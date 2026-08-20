@@ -1,0 +1,214 @@
+---
+moduleId: "07-containers"
+title: "Polyglot Microservices on Amazon EKS with Karpenter Autoscaling"
+summary: "Running 80+ microservices on Amazon Elastic Kubernetes Service (EKS) with Karpenter just-in-time node provisioning and AWS Load Balancer Controller."
+difficulty: "Expert"
+estimatedMinutes: 10
+industry: "E-Commerce & Global Retail"
+architectureStyle:
+  - "Kubernetes"
+  - "Karpenter Autoscaling"
+awsServices:
+  - name: "Amazon EKS"
+    category: "Containers"
+    role: "Managed Kubernetes control plane with multi-AZ etcd redundancy."
+  - name: "Karpenter"
+    category: "Compute"
+    role: "High-performance node autoscaler that provisions custom EC2 instance sizes in < 45 seconds."
+  - name: "AWS Load Balancer Controller"
+    category: "Networking"
+    role: "Automatically provisions and configures ALBs directly from Kubernetes Ingress manifests."
+  - name: "IAM Roles for Service Accounts (IRSA)"
+    category: "Security"
+    role: "Assigns granular AWS IAM roles to individual Kubernetes Pod service accounts."
+keyMetrics:
+  - label: "Node Scaling Velocity"
+    value: "42 seconds"
+    trend: "down"
+  - label: "Cluster Cost Efficiency"
+    value: "+38%"
+    trend: "up"
+  - label: "Total Active Pods"
+    value: "1,200+"
+    trend: "up"
+tags:
+  - "eks"
+  - "kubernetes"
+  - "karpenter"
+  - "irsa"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Node Provisioning Velocity", value: "42s", trend: "down" },
+  { label: "Cluster Resource Utilization", value: "84%", trend: "up" },
+  { label: "Total Microservices", value: "80+ Services", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A global retail conglomerate runs 80 distinct microservices written in Go, Java, Python, and Node.js. Their legacy Kubernetes setup used standard Cluster Autoscaler with fixed Node Groups. When traffic surged, provisioning new EC2 nodes took over 6 minutes, causing pending pods to stall and requests to drop.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Sub-60s Autoscaling</strong>: Scale nodes from 20 to 150 instances dynamically in under 1 minute.</li>
+    <li><strong>Right-Sizing & Mixed Fleets</strong>: Intelligently select the cheapest available EC2 instance family (Graviton, x86, Spot, On-Demand) matching exact pod CPU/memory requirements.</li>
+    <li><strong>Granular Pod Security</strong>: Zero shared node-level AWS IAM credentials (enforce IRSA).</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Amazon EKS with Karpenter Autoscaling Architecture"
+    diagram={`graph TD
+    Client([Public Shoppers]) --> Ingress[AWS Load Balancer Controller: ALB]
+    
+    subgraph EKSCluster [Amazon EKS Cluster]
+        Ingress --> PodSvc1[Cart Service Pods]
+        Ingress --> PodSvc2[Search Service Pods]
+        
+        Karpenter[Karpenter Controller] -.->|Observes Unschedulable Pods| EC2Fleet[EC2 Fleet API]
+        
+        subgraph ComputeNodes [Dynamically Provisioned Nodes]
+            Node1[EC2 c6g.2xlarge: Spot ARM64]
+            Node2[EC2 m6i.4xlarge: On-Demand]
+        end
+    end
+
+    EC2Fleet -->|Bypasses ASGs: Boots in 40s| ComputeNodes
+    ComputeNodes --> PodSvc1
+    ComputeNodes --> PodSvc2
+
+    style EKSCluster fill:#18223B,stroke:#06B6D4,stroke-width:2px,color:#fff
+    style Karpenter fill:#101728,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Ingress fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon EKS",
+      category: "Containers",
+      role: "Provides standard Kubernetes API compatibility, multi-AZ control planes, and automated master node upgrades."
+    },
+    {
+      name: "Karpenter",
+      category: "Compute",
+      role: "Evaluates pending pod requirements directly and calls EC2 Fleet APIs without the latency of Auto Scaling Groups."
+    },
+    {
+      name: "IAM Roles for Service Accounts (IRSA)",
+      category: "Security",
+      role: "Uses OIDC identity providers to issue temporary STS credentials scoped strictly to specific Kubernetes namespaces."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Kubernetes Cluster Autoscaler + Fixed Managed Node Groups",
+      pros: ["Standard upstream Kubernetes component"],
+      cons: ["Slow scale-up (5-8 mins)", "Inflexible rigid instance sizes", "Wasted capacity on underutilized nodes"],
+      verdict: "Suboptimal for dynamic, high-velocity workloads."
+    },
+    {
+      name: "Amazon EKS + Karpenter (Chosen)",
+      isChosen: true,
+      pros: ["Sub-45s node boot time", "Dynamic right-sizing of instances", "Automatic consolidation & graceful spot termination handling"],
+      cons: ["Requires Karpenter NodePool CRD management"],
+      verdict: "State-of-the-art autoscaler for enterprise Kubernetes."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Karpenter NodePool CRD Configuration" badge="Kubernetes Manifest">
+
+```
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values: ["spot", "on-demand"]
+        - key: "kubernetes.io/arch"
+          operator: In
+          values: ["arm64", "amd64"]
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values: ["c", "m", "r"]
+      nodeClassRef:
+        name: default
+  disruption:
+    consolidationPolicy: WhenUnderutilized
+    expireAfter: 720h
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Scale-Up Speed</strong>: Dropped from 6.5 minutes down to <strong>42 seconds</strong>.</li>
+    <li><strong>Cost Optimization</strong>: 38% cluster compute bill reduction through automated Spot instance adoption and bin-packing consolidation.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Kubernetes Autoscaling Law:</strong> For large-scale EKS clusters, replace legacy Auto Scaling Groups with <strong>Karpenter</strong> to eliminate node group sprawl and achieve sub-minute just-in-time provisioning.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="multiservice-ecommerce-platform"
+    questions={[
+      {
+        question: "Why is Karpenter vastly faster at scaling Kubernetes nodes than the traditional Cluster Autoscaler?",
+        options: [
+          "Karpenter eliminates Kubernetes pods entirely.",
+          "Karpenter communicates directly with the EC2 Fleet API without creating or manipulating intermediate EC2 Auto Scaling Groups.",
+          "Karpenter only runs on Docker desktop.",
+          "Karpenter requires no IAM permissions."
+        ],
+        correctIndex: 1,
+        explanation: "Traditional Cluster Autoscaler adjusts ASG desired capacity and waits for ASGs to launch instances. Karpenter calls the EC2 Fleet API directly, bypassing ASG latency."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://karpenter.sh/" target="_blank" rel="noopener">Karpenter Documentation</a></li>
+  </ul>
+</section>

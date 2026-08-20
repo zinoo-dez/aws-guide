@@ -1,0 +1,111 @@
+---
+interface Metric {
+  label: string;
+  value: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+interface Props {
+  metrics: Metric[];
+}
+
+const { metrics = [] } = Astro.props;
+---
+
+{metrics.length > 0 && (
+  <div class="metrics-strip glass-card">
+    <div class="metrics-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+      </svg>
+      <span>Production Benchmark & ROI Targets</span>
+    </div>
+    
+    <div class="metrics-grid">
+      {metrics.map((m) => (
+        <div class="metric-item">
+          <span class="metric-label">{m.label}</span>
+          <div class="metric-value-row">
+            <span class="metric-value">{m.value}</span>
+            {m.trend === 'up' && (
+              <span class="metric-trend trend-up" title="Performance Gain">↑</span>
+            )}
+            {m.trend === 'down' && (
+              <span class="metric-trend trend-down" title="Cost / Latency Reduction">↓</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  .metrics-strip {
+    margin: var(--space-6) 0;
+    padding: var(--space-4) var(--space-6);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--aws-orange-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .metrics-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--aws-orange);
+    margin-bottom: var(--space-3);
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--aws-orange-border);
+  }
+
+  .metric-label {
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .metric-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+  }
+
+  .metric-value {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .metric-trend {
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+
+  .trend-up {
+    color: var(--cat-compute);
+  }
+
+  .trend-down {
+    color: var(--cat-database);
+  }
+</style>

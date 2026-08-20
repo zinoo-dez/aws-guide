@@ -1,0 +1,846 @@
+---
+interface Question {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+interface Props {
+  caseStudyId: string;
+  questions: Question[];
+}
+
+const { caseStudyId, questions = [] } = Astro.props;
+---
+
+{questions.length > 0 && (
+  <div class="knowledge-quiz-card glass-card" id={`quiz-${caseStudyId}`} data-case-id={caseStudyId} data-total={questions.length}>
+    <!-- Top Header & Progress -->
+    <div class="quiz-top-bar">
+      <div class="quiz-badge-group">
+        <div class="quiz-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Architecture Knowledge Check</span>
+        </div>
+        <span class="quiz-step-indicator">
+          Question <strong class="current-step-num">1</strong> of <strong>{questions.length}</strong>
+        </span>
+      </div>
+
+      <!-- Segmented Step Dots / Bar -->
+      <div class="quiz-progress-track">
+        <div class="quiz-progress-fill" style={`width: ${(1 / questions.length) * 100}%`}></div>
+      </div>
+
+      <div class="quiz-steps-pills">
+        {questions.map((_, idx) => (
+          <button 
+            type="button" 
+            class={`step-pill-btn ${idx === 0 ? 'active' : ''}`} 
+            data-goto-step={idx}
+            aria-label={`Go to question ${idx + 1}`}
+          >
+            <span class="step-pill-num">{idx + 1}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Questions Slides Carousel -->
+    <div class="quiz-slides-container">
+      {questions.map((q, qIndex) => (
+        <div 
+          class={`quiz-slide ${qIndex === 0 ? 'active-slide' : ''}`} 
+          data-slide-index={qIndex} 
+          data-correct={q.correctIndex}
+        >
+          <div class="slide-question-header">
+            <span class="question-number-tag">Question {qIndex + 1 < 10 ? `0${qIndex + 1}` : qIndex + 1}</span>
+            <h3 class="question-title">{q.question}</h3>
+          </div>
+
+          <div class="options-grid">
+            {q.options.map((opt, optIndex) => {
+              const letter = String.fromCharCode(65 + optIndex);
+              return (
+                <label class="option-card" data-opt-index={optIndex}>
+                  <input 
+                    type="radio" 
+                    name={`q-${caseStudyId}-${qIndex}`} 
+                    value={optIndex} 
+                    class="option-radio-input"
+                  />
+                  <div class="option-letter-badge">{letter}</div>
+                  <div class="option-text-content">{opt}</div>
+                  <div class="option-check-icon">✓</div>
+                </label>
+              );
+            })}
+          </div>
+
+          <!-- Explanation Box (Appears after user selects an answer or submits) -->
+          <div class="explanation-box" hidden>
+            <div class="explanation-status-header">
+              <span class="status-icon"></span>
+              <span class="status-title"></span>
+            </div>
+            <p class="explanation-text">{q.explanation}</p>
+          </div>
+        </div>
+      ))}
+
+      <!-- Completion Results Scorecard Slide -->
+      <div class="quiz-slide results-slide" data-slide-index={questions.length} hidden>
+        <div class="results-card-inner">
+          <div class="trophy-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+              <path d="M4 22h16"></path>
+              <path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34"></path>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+            </svg>
+          </div>
+
+          <h3 class="results-heading">System Design Retention Score</h3>
+          <div class="results-score-display">
+            <span class="score-fraction"><span class="correct-score-count">0</span> / {questions.length}</span>
+            <span class="score-percentage">(<span class="percent-val">0</span>%)</span>
+          </div>
+
+          <p class="results-tier-badge"></p>
+          <p class="results-feedback-desc"></p>
+
+          <div class="results-action-buttons">
+            <button type="button" class="btn btn-secondary review-answers-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>Review Architecture Rationales</span>
+            </button>
+            <button type="button" class="btn btn-primary retake-quiz-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              <span>Retake Quiz</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="quiz-nav-footer">
+      <button type="button" class="btn btn-secondary prev-step-btn" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Previous</span>
+      </button>
+
+      <div class="quiz-progress-stats">
+        <span class="answered-count-text">0 of {questions.length} Answered</span>
+      </div>
+
+      <button type="button" class="btn btn-primary next-step-btn">
+        <span>Next Question</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+
+      <button type="button" class="btn btn-primary finish-quiz-btn" style="display: none;">
+        <span>Complete Architecture Check ✓</span>
+      </button>
+    </div>
+  </div>
+)}
+
+<style>
+  .knowledge-quiz-card {
+    margin: var(--space-8) 0;
+    padding: var(--space-6);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+
+  /* Top Bar */
+  .quiz-top-bar {
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .quiz-badge-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+
+  .quiz-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+  }
+
+  .quiz-step-indicator {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+  }
+
+  .quiz-step-indicator strong {
+    color: var(--text-primary);
+  }
+
+  .quiz-progress-track {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-surface-3);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+  }
+
+  .quiz-progress-fill {
+    height: 100%;
+    background: var(--aws-orange);
+    border-radius: var(--radius-full);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .quiz-steps-pills {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .step-pill-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .step-pill-btn:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+
+  .step-pill-btn.active {
+    background: var(--aws-orange);
+    color: #000000;
+    border-color: var(--aws-orange);
+    box-shadow: 0 0 12px rgba(255, 153, 0, 0.35);
+  }
+
+  .step-pill-btn.answered:not(.active) {
+    background: var(--cat-compute-bg);
+    color: var(--cat-compute);
+    border-color: var(--cat-compute-border);
+  }
+
+  /* Slides Container */
+  .quiz-slides-container {
+    position: relative;
+    min-height: 360px;
+  }
+
+  .quiz-slide {
+    display: none;
+    animation: fadeInSlide 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .quiz-slide.active-slide {
+    display: block;
+  }
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .slide-question-header {
+    margin-bottom: var(--space-5);
+  }
+
+  .question-number-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--aws-orange);
+    margin-bottom: var(--space-1);
+  }
+
+  .question-title {
+    font-size: 1.15rem;
+    color: var(--text-display);
+    line-height: 1.45;
+  }
+
+  .options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  .option-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+    position: relative;
+  }
+
+  .option-card:hover {
+    background: var(--bg-surface-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+
+  .option-radio-input {
+    display: none;
+  }
+
+  .option-letter-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-surface-3);
+    border: 1px solid var(--border-medium);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+  }
+
+  .option-text-content {
+    font-size: 0.925rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .option-check-icon {
+    font-size: 1rem;
+    font-weight: 800;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all var(--transition-fast);
+  }
+
+  .option-card:has(.option-radio-input:checked) {
+    border-color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+  }
+
+  .option-card:has(.option-radio-input:checked) .option-letter-badge {
+    background: var(--aws-orange);
+    color: #FFFFFF;
+    border-color: var(--aws-orange);
+  }
+
+  :root:not([data-theme="light"]) .option-card:has(.option-radio-input:checked) .option-letter-badge {
+    color: #000000;
+  }
+
+  /* Answer feedback states */
+  .option-card.is-correct {
+    border-color: var(--cat-compute) !important;
+    background: var(--cat-compute-bg) !important;
+  }
+
+  .option-card.is-correct .option-letter-badge {
+    background: var(--cat-compute) !important;
+    color: #FFFFFF !important;
+    border-color: var(--cat-compute) !important;
+  }
+
+  .option-card.is-correct .option-check-icon {
+    opacity: 1;
+    transform: scale(1);
+    color: var(--cat-compute);
+  }
+
+  .option-card.is-wrong {
+    border-color: var(--cat-observability) !important;
+    background: var(--cat-observability-bg) !important;
+  }
+
+  .option-card.is-wrong .option-letter-badge {
+    background: var(--cat-observability) !important;
+    color: #FFFFFF !important;
+    border-color: var(--cat-observability) !important;
+  }
+
+  .option-card.is-wrong .option-check-icon {
+    opacity: 1;
+    transform: scale(1);
+    color: var(--cat-observability);
+  }
+
+  /* Explanation card */
+  .explanation-box {
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
+    margin-top: var(--space-4);
+    animation: fadeInSlide 0.25s ease;
+  }
+
+  .explanation-box[hidden] {
+    display: none;
+  }
+
+  .explanation-status-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .explanation-box.correct-box {
+    border-left: 4px solid var(--cat-compute);
+  }
+
+  .explanation-box.correct-box .status-title {
+    color: var(--cat-compute);
+  }
+
+  .explanation-box.wrong-box {
+    border-left: 4px solid var(--cat-observability);
+  }
+
+  .explanation-box.wrong-box .status-title {
+    color: var(--cat-observability);
+  }
+
+  .explanation-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* Results Slide */
+  .results-card-inner {
+    text-align: center;
+    padding: var(--space-6) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .trophy-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--aws-orange-bg);
+    border: 2px solid var(--aws-orange-border);
+    color: var(--aws-orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+    box-shadow: 0 0 30px rgba(255, 153, 0, 0.25);
+  }
+
+  .results-heading {
+    font-size: 1.45rem;
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+  }
+
+  .results-score-display {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .score-fraction {
+    font-family: var(--font-mono);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-display);
+  }
+
+  .score-percentage {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    color: var(--aws-orange);
+    font-weight: 700;
+  }
+
+  .results-tier-badge {
+    display: inline-block;
+    padding: 0.35rem 0.95rem;
+    border-radius: var(--radius-full);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.875rem;
+    background: var(--cat-compute-bg);
+    color: var(--cat-compute);
+    border: 1px solid var(--cat-compute-border);
+    margin-bottom: var(--space-3);
+  }
+
+  .results-feedback-desc {
+    max-width: 540px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: var(--space-6);
+  }
+
+  .results-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Navigation Footer */
+  .quiz-nav-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+  }
+
+  .quiz-progress-stats {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+</style>
+
+<script>
+  function setupStepSliderQuizzes() {
+    document.querySelectorAll('.knowledge-quiz-card').forEach((quizCard) => {
+      const caseId = quizCard.getAttribute('data-case-id');
+      const totalQuestions = parseInt(quizCard.getAttribute('data-total') || '0', 10);
+      const slides = quizCard.querySelectorAll('.quiz-slide:not(.results-slide)');
+      const resultsSlide = quizCard.querySelector('.results-slide') as HTMLElement;
+      const stepPills = quizCard.querySelectorAll('.step-pill-btn');
+      const progressFill = quizCard.querySelector('.quiz-progress-fill') as HTMLElement;
+      const currentStepNum = quizCard.querySelector('.current-step-num') as HTMLElement;
+      const answeredCountText = quizCard.querySelector('.answered-count-text') as HTMLElement;
+
+      const prevBtn = quizCard.querySelector('.prev-step-btn') as HTMLButtonElement;
+      const nextBtn = quizCard.querySelector('.next-step-btn') as HTMLButtonElement;
+      const finishBtn = quizCard.querySelector('.finish-quiz-btn') as HTMLButtonElement;
+      const reviewBtn = quizCard.querySelector('.review-answers-btn') as HTMLButtonElement;
+      const retakeBtn = quizCard.querySelector('.retake-quiz-btn') as HTMLButtonElement;
+
+      let currentStep = 0;
+      let isSubmitted = false;
+
+      function updateSlideUI() {
+        slides.forEach((slide, idx) => {
+          if (idx === currentStep) {
+            slide.classList.add('active-slide');
+            slide.removeAttribute('hidden');
+          } else {
+            slide.classList.remove('active-slide');
+            slide.setAttribute('hidden', '');
+          }
+        });
+
+        if (resultsSlide) {
+          if (currentStep === totalQuestions) {
+            resultsSlide.removeAttribute('hidden');
+            resultsSlide.classList.add('active-slide');
+          } else {
+            resultsSlide.setAttribute('hidden', '');
+            resultsSlide.classList.remove('active-slide');
+          }
+        }
+
+        // Update step pills
+        stepPills.forEach((pill, idx) => {
+          if (idx === currentStep) {
+            pill.classList.add('active');
+          } else {
+            pill.classList.remove('active');
+          }
+        });
+
+        // Update progress bar
+        if (progressFill) {
+          const pct = Math.min(((currentStep + 1) / totalQuestions) * 100, 100);
+          progressFill.style.width = `${pct}%`;
+        }
+
+        if (currentStepNum) {
+          currentStepNum.textContent = String(Math.min(currentStep + 1, totalQuestions));
+        }
+
+        // Button states
+        if (prevBtn) {
+          prevBtn.disabled = currentStep === 0;
+          prevBtn.style.display = currentStep === totalQuestions ? 'none' : 'inline-flex';
+        }
+
+        if (currentStep === totalQuestions - 1) {
+          if (nextBtn) nextBtn.style.display = 'none';
+          if (finishBtn) finishBtn.style.display = 'inline-flex';
+        } else if (currentStep < totalQuestions - 1) {
+          if (nextBtn) nextBtn.style.display = 'inline-flex';
+          if (finishBtn) finishBtn.style.display = 'none';
+        } else {
+          // On results slide
+          if (nextBtn) nextBtn.style.display = 'none';
+          if (finishBtn) finishBtn.style.display = 'none';
+        }
+
+        updateAnsweredCount();
+      }
+
+      function updateAnsweredCount() {
+        let answered = 0;
+        slides.forEach((slide, idx) => {
+          const checked = slide.querySelector('.option-radio-input:checked');
+          if (checked) {
+            answered++;
+            stepPills[idx]?.classList.add('answered');
+          } else {
+            stepPills[idx]?.classList.remove('answered');
+          }
+        });
+
+        if (answeredCountText) {
+          answeredCountText.textContent = `${answered} of ${totalQuestions} Answered`;
+        }
+      }
+
+      function validateOptionSelection(slide: Element) {
+        const correctIndex = parseInt(slide.getAttribute('data-correct') || '0', 10);
+        const checkedRadio = slide.querySelector('.option-radio-input:checked') as HTMLInputElement;
+        const allOptionCards = slide.querySelectorAll('.option-card');
+        const explanationBox = slide.querySelector('.explanation-box') as HTMLElement;
+        const statusIcon = slide.querySelector('.status-icon') as HTMLElement;
+        const statusTitle = slide.querySelector('.status-title') as HTMLElement;
+
+        allOptionCards.forEach(c => c.classList.remove('is-correct', 'is-wrong'));
+
+        if (checkedRadio) {
+          const userIdx = parseInt(checkedRadio.value, 10);
+          if (userIdx === correctIndex) {
+            allOptionCards[userIdx]?.classList.add('is-correct');
+            if (explanationBox) {
+              explanationBox.className = 'explanation-box correct-box';
+              explanationBox.removeAttribute('hidden');
+            }
+            if (statusIcon) statusIcon.textContent = '✓';
+            if (statusTitle) statusTitle.textContent = 'Correct Architectural Decision';
+          } else {
+            allOptionCards[userIdx]?.classList.add('is-wrong');
+            allOptionCards[correctIndex]?.classList.add('is-correct');
+            if (explanationBox) {
+              explanationBox.className = 'explanation-box wrong-box';
+              explanationBox.removeAttribute('hidden');
+            }
+            if (statusIcon) statusIcon.textContent = '✗';
+            if (statusTitle) statusTitle.textContent = 'Suboptimal Architectural Choice';
+          }
+        }
+      }
+
+      // Wire Option Card clicks
+      slides.forEach((slide) => {
+        const optionInputs = slide.querySelectorAll('.option-radio-input');
+        optionInputs.forEach((input) => {
+          input.addEventListener('change', () => {
+            validateOptionSelection(slide);
+            updateAnsweredCount();
+          });
+        });
+      });
+
+      // Wire Pill clicks
+      stepPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+          const target = parseInt(pill.getAttribute('data-goto-step') || '0', 10);
+          currentStep = target;
+          updateSlideUI();
+        });
+      });
+
+      // Prev & Next Buttons
+      prevBtn?.addEventListener('click', () => {
+        if (currentStep > 0) {
+          currentStep--;
+          updateSlideUI();
+        }
+      });
+
+      nextBtn?.addEventListener('click', () => {
+        if (currentStep < totalQuestions - 1) {
+          currentStep++;
+          updateSlideUI();
+        }
+      });
+
+      // Finish / Submit Quiz
+      function finishQuiz() {
+        let correctTotal = 0;
+        let answeredTotal = 0;
+
+        slides.forEach((slide) => {
+          const correctIndex = parseInt(slide.getAttribute('data-correct') || '0', 10);
+          const checkedRadio = slide.querySelector('.option-radio-input:checked') as HTMLInputElement;
+          validateOptionSelection(slide);
+
+          if (checkedRadio) {
+            answeredTotal++;
+            if (parseInt(checkedRadio.value, 10) === correctIndex) {
+              correctTotal++;
+            }
+          }
+        });
+
+        if (answeredTotal < totalQuestions && !isSubmitted) {
+          const proceed = confirm(`You have answered ${answeredTotal} of ${totalQuestions} questions. Do you want to submit anyway?`);
+          if (!proceed) return;
+        }
+
+        isSubmitted = true;
+        currentStep = totalQuestions;
+        updateSlideUI();
+
+        // Calculate and render results
+        const scoreCountEl = quizCard.querySelector('.correct-score-count');
+        const percentValEl = quizCard.querySelector('.percent-val');
+        const tierBadgeEl = quizCard.querySelector('.results-tier-badge');
+        const feedbackDescEl = quizCard.querySelector('.results-feedback-desc');
+
+        const pct = Math.round((correctTotal / totalQuestions) * 100);
+
+        if (scoreCountEl) scoreCountEl.textContent = String(correctTotal);
+        if (percentValEl) percentValEl.textContent = String(pct);
+
+        if (tierBadgeEl) {
+          if (pct === 100) {
+            tierBadgeEl.textContent = '🌟 Master AWS Solutions Architect';
+            tierBadgeEl.className = 'results-tier-badge';
+          } else if (pct >= 80) {
+            tierBadgeEl.textContent = '⚡ Senior Cloud Architect';
+            tierBadgeEl.className = 'results-tier-badge';
+          } else if (pct >= 60) {
+            tierBadgeEl.textContent = '🛡️ Cloud Practitioner Level';
+            tierBadgeEl.className = 'results-tier-badge';
+          } else {
+            tierBadgeEl.textContent = '📖 Architecture Foundations';
+            tierBadgeEl.className = 'results-tier-badge';
+          }
+        }
+
+        if (feedbackDescEl) {
+          if (pct === 100) {
+            feedbackDescEl.textContent = 'Flawless execution! You demonstrated total command of AWS Well-Architected principles, cost optimization, fault tolerance, and operational excellence.';
+          } else if (pct >= 80) {
+            feedbackDescEl.textContent = 'Strong grasp of core architecture tradeoffs! Review the explanations for edge cases to master production scaling subtleties.';
+          } else {
+            feedbackDescEl.textContent = 'Good effort! Revisit the Trade-offs Matrix and Deep-Dive sections above to master failure recovery and security boundaries.';
+          }
+        }
+
+        // Save progress to localStorage
+        if (caseId && correctTotal >= Math.ceil(totalQuestions * 0.8)) {
+          const completed = JSON.parse(localStorage.getItem('aws-completed-quizzes') || '[]');
+          if (!completed.includes(caseId)) {
+            completed.push(caseId);
+            localStorage.setItem('aws-completed-quizzes', JSON.stringify(completed));
+          }
+        }
+      }
+
+      finishBtn?.addEventListener('click', finishQuiz);
+
+      // Review explanations button
+      reviewBtn?.addEventListener('click', () => {
+        currentStep = 0;
+        updateSlideUI();
+      });
+
+      // Retake quiz button
+      retakeBtn?.addEventListener('click', () => {
+        isSubmitted = false;
+        slides.forEach(slide => {
+          const radios = slide.querySelectorAll('.option-radio-input') as NodeListOf<HTMLInputElement>;
+          radios.forEach(r => r.checked = false);
+          const optionCards = slide.querySelectorAll('.option-card');
+          optionCards.forEach(c => c.classList.remove('is-correct', 'is-wrong'));
+          const explanation = slide.querySelector('.explanation-box') as HTMLElement;
+          if (explanation) explanation.setAttribute('hidden', '');
+        });
+
+        stepPills.forEach(p => p.classList.remove('answered'));
+        currentStep = 0;
+        updateSlideUI();
+      });
+
+      // Initialize
+      updateSlideUI();
+    });
+  }
+
+  setupStepSliderQuizzes();
+  document.addEventListener('astro:page-load', setupStepSliderQuizzes);
+</script>

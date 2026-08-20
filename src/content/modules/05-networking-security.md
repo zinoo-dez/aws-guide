@@ -1,0 +1,50 @@
+---
+moduleNumber: 5
+title: "Networking & Security Foundation"
+tagline: "VPC Topology, Subnet Isolation, Least Privilege IAM & KMS Encryption"
+description: "Master zero-trust cloud network architecture. Learn how to design multi-tier VPCs, route tables, Security Groups, NACLs, NAT Gateways, VPC Interface Endpoints (PrivateLink), and AWS KMS envelope encryption."
+theme: "Network Isolation, Zero-Trust & Data Security"
+keyServices:
+  - "Amazon VPC"
+  - "AWS IAM"
+  - "AWS Key Management Service (KMS)"
+  - "AWS Secrets Manager"
+  - "AWS WAF"
+  - "AWS PrivateLink"
+difficulty: "Intermediate"
+estimatedHours: 6
+icon: "shield"
+order: 5
+learningOutcomes:
+  - "Design 3-tier VPC topologies separating public load balancers, private compute, and isolated database subnets."
+  - "Eliminate expensive NAT Gateway egress data processing costs using AWS VPC Interface Endpoints."
+  - "Implement stateful Security Groups and stateless Network Access Control Lists (NACLs)."
+  - "Apply envelope encryption using AWS KMS Customer Managed Keys (CMKs) with automated key rotation."
+---
+
+## The Zero-Trust Network Topology
+A production VPC must never permit backend databases or compute workloads to have direct public internet connectivity. 
+
+### Subnet Classification:
+1. **Public Subnet**: Holds internet-facing resources (ALBs, NAT Gateways). Connected to Internet Gateway (IGW).
+2. **Private Application Subnet**: Holds backend compute (EC2, ECS Tasks, Lambda VPC). Egress to internet is strictly routed through a NAT Gateway.
+3. **Isolated Database Subnet**: Holds data stores (RDS, Aurora, ElastiCache). Has **no** default route `0.0.0.0/0` to either IGW or NAT Gateway. Ingress is restricted to app subnet CIDRs.
+
+```mermaid
+graph TD
+    IGW[Internet Gateway] -->|Public Traffic| PublicSubnet[Public Subnet: ALB & NAT GW]
+    PublicSubnet -->|Internal Forward| AppSubnet[Private App Subnet: ECS / EC2]
+    AppSubnet -->|Database Query: Port 5432| DBSubnet[(Isolated DB Subnet: Aurora)]
+    AppSubnet -->|Secure AWS API Call| VPCEndpoint[VPC Endpoint: S3 / DynamoDB]
+    
+    style PublicSubnet fill:#18223B,stroke:#FF9900,stroke-width:1px,color:#fff
+    style AppSubnet fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style DBSubnet fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style VPCEndpoint fill:#18223B,stroke:#818CF8,stroke-width:1px,color:#fff
+```
+
+---
+
+## Case Studies in This Module
+1. **[Production 3-Tier Enterprise VPC](/case-studies/three-tier-isolated-vpc)**: Complete network isolation separating public ingress, private app compute, and isolated DB subnets.
+2. **[Zero-Trust Private API Backend](/case-studies/zero-trust-private-api)**: Eliminating NAT gateway egress data fees using VPC Interface Endpoints (PrivateLink) and KMS CMK envelope encryption.

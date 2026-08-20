@@ -1,0 +1,390 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Badge from '../components/ui/Badge.astro';
+import { getCollection } from 'astro:content';
+
+const modules = await getCollection('modules');
+const sortedModules = [...modules].sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
+const caseStudies = await getCollection('caseStudies');
+---
+
+<BaseLayout 
+  title="Visual Learning Roadmap | AWS Architecture Guild"
+  description="Interactive step-by-step visual cloud architecture journey from Foundations (Module 0) to Advanced Enterprise Capstones (Module 10)."
+>
+  <div class="roadmap-page container">
+    <header class="roadmap-header">
+      <span class="section-kicker">Visual Curriculum Progression</span>
+      <h1 class="roadmap-title">The Cloud Architect Journey</h1>
+      <p class="roadmap-subtitle">
+        Follow the structured path from mental models and serverless primitives to enterprise multi-region active-active system design.
+      </p>
+    </header>
+
+    <div class="roadmap-timeline">
+      {sortedModules.map((mod, index) => {
+        const modCases = caseStudies.filter(c => c.data.moduleId === mod.id);
+        const isCapstone = mod.data.moduleNumber === 10;
+        const isFoundation = mod.data.moduleNumber === 0;
+
+        return (
+          <div class={`timeline-node ${isCapstone ? 'capstone-node' : ''} ${isFoundation ? 'foundation-node' : ''}`}>
+            <div class="timeline-marker">
+              <span class="marker-number">{mod.data.moduleNumber}</span>
+              {index < sortedModules.length - 1 && <div class="marker-line"></div>}
+            </div>
+
+            <div class="timeline-card glass-card">
+              <div class="node-top-bar">
+                <span class="node-module-id">Module {mod.data.moduleNumber}</span>
+                <Badge variant="difficulty" type={mod.data.difficulty} size="sm" />
+                <span class="node-hours">{mod.data.estimatedHours} Hours</span>
+              </div>
+
+              <h2 class="node-title">
+                <a href={`/modules/${mod.id}`}>{mod.data.title}</a>
+              </h2>
+              <p class="node-tagline">{mod.data.tagline}</p>
+              <p class="node-desc">{mod.data.description}</p>
+
+              <!-- Learning Outcomes -->
+              <div class="outcomes-box">
+                <span class="outcomes-title">Core Outcomes:</span>
+                <ul class="outcomes-list">
+                  {mod.data.learningOutcomes.slice(0, 3).map(outcome => (
+                    <li>
+                      <span class="outcome-check">✓</span>
+                      <span>{outcome}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <!-- Case Studies Under This Module -->
+              <div class="node-case-studies">
+                <span class="cases-header">{modCases.length} Included Case Studies:</span>
+                <div class="cases-pills-grid">
+                  {modCases.map(cs => (
+                    <a href={`/case-studies/${cs.id}`} class="roadmap-case-pill">
+                      <span class="pill-dot"></span>
+                      <span class="pill-title">{cs.data.title}</span>
+                      <span class="pill-time">{cs.data.estimatedMinutes}m</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div class="node-footer">
+                <div class="node-services">
+                  {mod.data.keyServices.map(svc => (
+                    <span class="service-tag">{svc}</span>
+                  ))}
+                </div>
+                <a href={`/modules/${mod.id}`} class="btn btn-secondary btn-sm">
+                  <span>Enter Module</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .roadmap-page {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-16);
+    max-width: 1040px;
+  }
+
+  .roadmap-header {
+    text-align: center;
+    margin-bottom: var(--space-12);
+  }
+
+  .roadmap-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+  }
+
+  .roadmap-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* Timeline Tree */
+  .roadmap-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .timeline-node {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .timeline-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .marker-number {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-surface-2);
+    border: 2px solid var(--border-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    z-index: 2;
+  }
+
+  .foundation-node .marker-number {
+    border-color: var(--aws-orange);
+    color: var(--aws-orange);
+  }
+
+  .capstone-node .marker-number {
+    background: var(--aws-orange);
+    color: #000;
+    border-color: var(--aws-orange);
+    box-shadow: 0 0 20px rgba(255, 153, 0, 0.4);
+  }
+
+  .marker-line {
+    width: 2px;
+    background: var(--border-subtle);
+    position: absolute;
+    top: 44px;
+    bottom: -40px;
+    z-index: 1;
+  }
+
+  .timeline-card {
+    padding: var(--space-6);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .capstone-node .timeline-card {
+    border-color: var(--aws-orange-border);
+    background: linear-gradient(180deg, rgba(255, 153, 0, 0.05) 0%, var(--bg-surface-1) 100%);
+  }
+
+  .node-top-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .node-module-id {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+  }
+
+  .node-hours {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .node-title {
+    font-size: 1.45rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .node-title a {
+    color: var(--text-display);
+  }
+
+  .node-title a:hover {
+    color: var(--aws-orange);
+  }
+
+  .node-tagline {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .node-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-4);
+  }
+
+  /* Outcomes Box */
+  .outcomes-box {
+    background: var(--bg-surface-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .outcomes-title {
+    display: block;
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+
+  .outcomes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .outcomes-list li {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .outcome-check {
+    color: #10B981;
+    font-weight: 700;
+  }
+
+  /* Cases list */
+  .node-case-studies {
+    margin-bottom: var(--space-4);
+  }
+
+  .cases-header {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .cases-pills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .roadmap-case-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.65rem;
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .roadmap-case-pill:hover {
+    background: var(--bg-surface-hover);
+    border-color: var(--aws-orange-border);
+    transform: translateX(4px);
+  }
+
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--aws-orange);
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .pill-title {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pill-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* Footer */
+  .node-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .node-services {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+
+  .service-tag {
+    font-size: 0.725rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    background: var(--bg-surface-3);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .btn-sm {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 640px) {
+    .timeline-node {
+      grid-template-columns: 1fr;
+    }
+    .timeline-marker {
+      display: none;
+    }
+  }
+</style>

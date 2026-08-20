@@ -1,0 +1,235 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Badge from '../../components/ui/Badge.astro';
+import { getCollection } from 'astro:content';
+
+const caseStudies = await getCollection('caseStudies');
+
+// Aggregate all services across case studies
+interface ServiceAgg {
+  name: string;
+  category: string;
+  cases: { id: string; title: string; role: string; difficulty: string }[];
+}
+
+const serviceMap = new Map<string, ServiceAgg>();
+
+caseStudies.forEach((cs) => {
+  cs.data.awsServices.forEach((svc) => {
+    if (!serviceMap.has(svc.name)) {
+      serviceMap.set(svc.name, {
+        name: svc.name,
+        category: svc.category,
+        cases: [],
+      });
+    }
+    serviceMap.get(svc.name)!.cases.push({
+      id: cs.id,
+      title: cs.data.title,
+      role: svc.role,
+      difficulty: cs.data.difficulty,
+    });
+  });
+});
+
+const allServices = Array.from(serviceMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+// Group by category
+const categories = Array.from(new Set(allServices.map(s => s.category))).sort();
+---
+
+<BaseLayout 
+  title="AWS Services Reference Matrix | AWS Architecture Guild"
+  description="Cross-reference all AWS services with real-world case studies demonstrating their production architecture roles and trade-offs."
+>
+  <div class="services-index-page container">
+    <header class="page-header">
+      <span class="section-kicker">Service-to-Architecture Index</span>
+      <h1 class="page-title">AWS Services Index</h1>
+      <p class="page-subtitle">
+        Discover where and why specific AWS services are implemented across our 29+ real-world case studies.
+      </p>
+    </header>
+
+    <div class="services-content-layout">
+      {categories.map((cat) => {
+        const catServices = allServices.filter(s => s.category === cat);
+        return (
+          <section class="category-section">
+            <div class="category-header">
+              <Badge variant="category" type={cat} size="lg">{cat}</Badge>
+              <span class="service-count">{catServices.length} Services</span>
+            </div>
+
+            <div class="services-grid">
+              {catServices.map((svc) => (
+                <div class="service-card glass-card">
+                  <div class="service-card-top">
+                    <h3 class="service-name">{svc.name}</h3>
+                    <span class="case-badge">{svc.cases.length} Studies</span>
+                  </div>
+
+                  <div class="service-cases-list">
+                    {svc.cases.map((c) => (
+                      <a href={`/case-studies/${c.id}`} class="service-case-link">
+                        <span class="case-dot"></span>
+                        <div class="case-link-details">
+                          <span class="case-link-title">{c.title}</span>
+                          <span class="case-link-role">{c.role}</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .services-index-page {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-16);
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: var(--space-12);
+  }
+
+  .page-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+  }
+
+  .page-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .services-content-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .category-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .service-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-6);
+  }
+
+  .service-card {
+    padding: var(--space-5);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .service-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .service-name {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .case-badge {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-full);
+  }
+
+  .service-cases-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .service-case-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface-2);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .service-case-link:hover {
+    background: var(--bg-surface-hover);
+    border-color: var(--aws-orange-border);
+    transform: translateX(3px);
+  }
+
+  .case-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--aws-orange);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .case-link-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+  }
+
+  .case-link-title {
+    font-size: 0.825rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.35;
+  }
+
+  .case-link-role {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+</style>

@@ -1,0 +1,207 @@
+---
+moduleId: "08-devops-iac"
+title: "Multi-Environment GitOps Engine: Trunk-Based Delivery with AWS CDK"
+summary: "Building an automated Dev, Staging, and Production delivery pipeline with AWS CDK (TypeScript), automated synth testing, and manual approval gates."
+difficulty: "Intermediate"
+estimatedMinutes: 8
+industry: "Enterprise DevOps & SRE"
+architectureStyle:
+  - "GitOps"
+  - "Infrastructure as Code"
+awsServices:
+  - name: "AWS CodePipeline"
+    category: "DevOps"
+    role: "Orchestrates multi-stage promotion workflows (Source -> Build -> Dev -> Staging -> Prod)."
+  - name: "AWS CodeBuild"
+    category: "DevOps"
+    role: "Runs unit tests, cdk-nag security linters, and synthetic end-to-end integration tests."
+  - name: "AWS CDK (TypeScript)"
+    category: "DevOps"
+    role: "Defines cloud infrastructure using object-oriented, type-safe constructs."
+  - name: "AWS Systems Manager Parameter Store"
+    category: "Management"
+    role: "Injects dynamic environment configuration variables and secrets."
+keyMetrics:
+  - label: "Lead Time to Production"
+    value: "18 mins (from 5 days)"
+    trend: "down"
+  - label: "Failed Deployment Rate"
+    value: "< 0.5%"
+    trend: "down"
+  - label: "Configuration Drift"
+    value: "0%"
+    trend: "down"
+tags:
+  - "cdk"
+  - "codepipeline"
+  - "gitops"
+  - "iac"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Commit to Production", value: "18 mins", trend: "down" },
+  { label: "Deployment Failure Rate", value: "< 0.5%", trend: "down" },
+  { label: "Infrastructure Drift", value: "0.0%", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An enterprise software team had disparate infrastructure across environments. Production had manual console tweaks that did not exist in Staging, causing deployments that passed staging tests to immediately fail in production. Deployments required multi-hour maintenance windows on weekends.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>100% Immutable Infrastructure as Code</strong>: Zero manual changes permitted in AWS Web Console.</li>
+    <li><strong>Automated Pre-Flight Verification</strong>: Static security analysis (cdk-nag), unit tests, and synthetic smoke tests before staging promotion.</li>
+    <li><strong>Trunk-Based Promotion</strong>: Single Git repository automatically promoting to Dev, Staging, and Production with approval checkpoints.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Multi-Environment GitOps CDK Pipeline"
+    diagram={`graph LR
+    Git([Git Push to Main]) --> Source[CodePipeline Source]
+    Source --> Synth[CodeBuild: CDK Synth & cdk-nag Security Lint]
+    
+    Synth --> DeployDev[Deploy Stage: Dev Account]
+    DeployDev --> TestDev[Automated Integration Tests]
+    
+    TestDev --> DeployStage[Deploy Stage: Staging Account]
+    DeployStage --> TestStage[Synthetic Smoke Tests]
+    
+    TestStage --> Gate{Manual Lead Approval Gate}
+    Gate -->|Approved| DeployProd[Deploy Stage: Production Account]
+
+    style Source fill:#18223B,stroke:#34D399,stroke-width:2px,color:#fff
+    style Synth fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
+    style DeployProd fill:#0B101C,stroke:#FB7185,stroke-width:2px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS CDK (Cloud Development Kit)",
+      category: "DevOps",
+      role: "Enables infrastructure definition in TypeScript with reusable custom construct libraries."
+    },
+    {
+      name: "AWS CodePipeline",
+      category: "DevOps",
+      role: "Manages cross-account IAM role assumptions to deploy CloudFormation stacks into isolated AWS accounts."
+    },
+    {
+      name: "cdk-nag",
+      category: "Security",
+      role: "Validates CDK stacks against HIPAA, NIST, and AWS Well-Architected security best practices during compilation."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Manual AWS Management Console Changes",
+      pros: ["Fast initial experimentation"],
+      cons: ["Impossible to audit", "Severe configuration drift", "Fatal production surprises"],
+      verdict: "Strictly prohibited for enterprise systems."
+    },
+    {
+      name: "Type-Safe AWS CDK GitOps Engine (Chosen)",
+      isChosen: true,
+      pros: ["Type safety with autocomplete", "Automated cross-account rollouts", "100% reproducible environments"],
+      cons: ["Requires TypeScript and CDK learning curve"],
+      verdict: "State-of-the-art modern cloud delivery engine."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="AWS CDK Multi-Stage Pipeline Definition" badge="TypeScript CDK">
+
+```
+import * as cdk from 'aws-cdk-lib';
+import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines';
+
+export class DeliveryPipelineStack extends cdk.Stack {
+  constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const pipeline = new CodePipeline(this, 'Pipeline', {
+      pipelineName: 'EnterpriseAppPipeline',
+      synth: new ShellStep('Synth', {
+        input: CodePipelineSource.gitHub('org/repo', 'main'),
+        commands: ['npm ci', 'npm run build', 'npx cdk synth'],
+      }),
+    });
+
+    pipeline.addStage(new ApplicationStage(this, 'Staging', { env: { account: '111111111111', region: 'us-east-1' } }));
+    pipeline.addStage(new ApplicationStage(this, 'Production', { env: { account: '222222222222', region: 'us-east-1' } }), {
+      pre: [new cdk.pipelines.ManualApprovalStep('PromoteToProd')],
+    });
+  }
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Lead Time</strong>: Feature release time dropped from 5 days to <strong>18 minutes</strong>.</li>
+    <li><strong>Production Incidents</strong>: 98% reduction in deployment-related configuration errors.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>GitOps Rule:</strong> If an infrastructure resource is not defined in version control (IaC), it does not exist. All changes must flow through automated Git pipelines.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="gitops-multienv-pipeline"
+    questions={[
+      {
+        question: "What is the primary benefit of cdk-nag in an automated CI/CD pipeline?",
+        options: [
+          "It automatically deletes AWS accounts.",
+          "It statically inspects generated CloudFormation templates for security and compliance violations (e.g. unencrypted S3, open security groups) during build time.",
+          "It speeds up Docker build times.",
+          "It manages Route 53 DNS records."
+        ],
+        correctIndex: 1,
+        explanation: "cdk-nag acts as a static analysis security linter for AWS CDK, failing pipeline builds if rules like missing encryption or wildcard IAM policies are detected."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/cdk/v2/guide/cdk_pipeline.html" target="_blank" rel="noopener">CDK Pipelines Guide</a></li>
+  </ul>
+</section>

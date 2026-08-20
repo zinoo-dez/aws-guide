@@ -1,0 +1,55 @@
+---
+moduleNumber: 10
+title: "Advanced Real-World Capstone Systems"
+tagline: "Enterprise-Scale Architectures: Streaming, Banking, Multi-Tenant SaaS & IoT"
+description: "Deconstruct complex, multi-service enterprise architectures based on real-world industry leaders. Study before-and-after transformations, multi-region active-active topologies, zero-RPO/RTO ledgers, and million-device IoT pipelines."
+theme: "Enterprise System Design & High-Scale Capstones"
+keyServices:
+  - "Amazon Route 53 Arc"
+  - "Amazon DynamoDB Global Tables"
+  - "AWS Elemental MediaConvert"
+  - "AWS IoT Core"
+  - "Amazon Timestream"
+  - "Amazon Aurora Global Database"
+difficulty: "Expert"
+estimatedHours: 12
+icon: "award"
+order: 10
+learningOutcomes:
+  - "Architect active-active multi-region databases across oceans with sub-second replication conflict resolution."
+  - "Build media ingestion, chunked distributed transcoding, and tokenized CDN delivery at Netflix scale."
+  - "Enforce strict zero-RPO financial ledgers with KMS envelope encryption and compliance audit trails."
+  - "Design dynamic tenant isolation (Silo vs Pool) and compute quota management for high-growth B2B SaaS."
+---
+
+## Capstone System Design Masterclass
+Capstone systems combine every layer of the cloud stack—networking, compute, data persistence, streaming, and observability—into a cohesive, fault-tolerant whole.
+
+```mermaid
+graph LR
+    subgraph Region_US_East [Region: us-east-1]
+        R53_Arc[Route 53 Application Recovery Controller] --> ALB1[ALB Region 1]
+        ALB1 --> App1[Fargate Microservices]
+        App1 --> DDB1[(DynamoDB Global Table)]
+    end
+
+    subgraph Region_EU_West [Region: eu-west-1]
+        R53_Arc --> ALB2[ALB Region 2]
+        ALB2 --> App2[Fargate Microservices]
+        App2 --> DDB2[(DynamoDB Global Table)]
+    end
+
+    DDB1 <-->|Async Multi-Master Replication < 1s| DDB2
+
+    style R53_Arc fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style DDB1 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style DDB2 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
+```
+
+---
+
+## Case Studies in This Module
+1. **[Netflix-Scale Adaptive Video Streaming](/case-studies/netflix-style-media-streaming)**: Global media ingest, distributed chunked transcoding, origin shielding, and dynamic tokenized CDN delivery.
+2. **[FinTech Multi-Region Active-Active Banking Core](/case-studies/fintech-core-banking-migration)**: Zero-RPO distributed ledger across `us-east-1` and `us-west-2` with DynamoDB Global Tables.
+3. **[Global Multi-Tenant B2B SaaS Platform](/case-studies/global-multitenant-saas)**: Hybrid tenant isolation (Silo vs Pool) with dynamic database tenant partitioning, IAM ABAC, and tenant metering.
+4. **[Smart Connected Fleet Telemetry Engine](/case-studies/smart-fleet-iot-telemetry)**: Ingesting telemetry from 500,000 vehicles via AWS IoT Core MQTT into Timestream with anomaly alerting.

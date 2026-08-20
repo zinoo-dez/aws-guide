@@ -1,0 +1,197 @@
+---
+moduleId: "03-serverless-apps"
+title: "Real-Time Serverless Image Processing & Media Pipeline"
+summary: "Asynchronously transcode, watermark, and generate responsive image thumbnails using S3 Event Notifications, AWS Lambda, and Amazon EventBridge."
+difficulty: "Intermediate"
+estimatedMinutes: 8
+industry: "E-Commerce & Digital Media"
+architectureStyle:
+  - "Serverless"
+  - "Event-Driven"
+awsServices:
+  - name: "Amazon S3"
+    category: "Storage"
+    role: "Stores original high-res uploads and processed responsive image tiers."
+  - name: "AWS Lambda"
+    category: "Compute"
+    role: "Executes Sharp/FFmpeg media transformations with 1024MB ephemeral compute."
+  - name: "Amazon EventBridge"
+    category: "Serverless"
+    role: "Routes S3 object-created events to image and video processing queues."
+  - name: "Amazon SQS"
+    category: "Serverless"
+    role: "Buffers batch image upload spikes with Dead-Letter Queues (DLQs) for failed files."
+keyMetrics:
+  - label: "Processing Latency"
+    value: "650ms / image"
+    trend: "down"
+  - label: "Monthly Idle Cost"
+    value: "$0.00"
+    trend: "down"
+  - label: "Throughput Limit"
+    value: "10,000 parallel"
+    trend: "up"
+tags:
+  - "lambda"
+  - "s3"
+  - "eventbridge"
+  - "sqs"
+  - "serverless"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Per-Image Transform Time", value: "650ms", trend: "down" },
+  { label: "Idle Infrastructure Cost", value: "$0.00", trend: "down" },
+  { label: "Peak Batch Throughput", value: "10,000+ parallel", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An e-commerce marketplace receives over 200,000 product image uploads each day from sellers. The legacy system processed uploads synchronously on web servers, which caused HTTP request timeouts (504 Gateway Timeout) whenever sellers uploaded 20MB RAW or PNG files, leading to abandoned listings.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Asynchronous Decoupling</strong>: User upload completes in &lt;500ms; background processing runs asynchronously.</li>
+    <li><strong>Generate Multiple Tiers</strong>: WebP thumbnails (150x150), medium cards (600x600), and zoom views (1600x1600).</li>
+    <li><strong>Zero Server Management</strong>: Scale from 0 at night to 5,000 concurrent transformations during flash sales.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Event-Driven Media Pipeline Topology"
+    diagram={`graph LR
+    User([Seller Web/Mobile App]) -->|1. Direct Upload via Pre-Signed URL| S3Upload[(S3 Raw Uploads Bucket)]
+    S3Upload -->|2. S3 ObjectCreated Event| EB[Amazon EventBridge]
+    EB -->|3. Filter: *.jpg / *.png| SQS[Amazon SQS Queue]
+    SQS -->|4. Batch Trigger| Lambda[AWS Lambda: Sharp Image Worker]
+    Lambda -->|5. Save WebP Thumbnails| S3Processed[(S3 Optimized Delivery Bucket)]
+    Lambda -->|6. Publish Event| EB_Out[EventBridge: ImageOptimized]
+
+    style S3Upload fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
+    style EB fill:#18223B,stroke:#F59E0B,stroke-width:2px,color:#fff
+    style Lambda fill:#18223B,stroke:#A78BFA,stroke-width:2px,color:#fff
+    style S3Processed fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Direct Pre-Signed URL Upload</strong>: The client requests a temporary S3 pre-signed PUT URL from the backend API, bypassing backend application servers entirely for upload bandwidth.</li>
+    <li><strong>EventBridge Notification</strong>: S3 emits an <code>ObjectCreated</code> event directly to Amazon EventBridge.</li>
+    <li><strong>SQS Buffering</strong>: EventBridge pushes the event into an SQS queue to protect downstream database writes and rate-limit third-party APIs.</li>
+    <li><strong>Lambda Transformation</strong>: Lambda functions read SQS batches, download the source image, generate WebP variants using libvips/Sharp, and save them to the public CDN bucket.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS Lambda",
+      category: "Compute",
+      role: "Executes media resizing in parallel micro-containers, paying only for the 650ms execution duration."
+    },
+    {
+      name: "Amazon S3 Pre-Signed URLs",
+      category: "Storage",
+      role: "Enables direct browser-to-S3 uploads, keeping massive image payloads off application compute instances."
+    },
+    {
+      name: "Amazon EventBridge",
+      category: "Serverless",
+      role: "Provides declarative event routing rules filtering by S3 file extensions and bucket prefixes."
+    },
+    {
+      name: "Amazon SQS",
+      category: "Serverless",
+      role: "Acts as a buffer with a Dead-Letter Queue (DLQ) to capture corrupt or unparseable image files."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Synchronous Node.js Web Server Resizing",
+      pros: ["Immediate response in same HTTP call"],
+      cons: ["Ties up HTTP threads", "Crashes under large files", "High CPU billing 24/7"],
+      verdict: "Anti-pattern for media processing."
+    },
+    {
+      name: "Asynchronous S3 + SQS + Lambda (Chosen)",
+      isChosen: true,
+      pros: ["Zero idle cost", "Instant client response", "Automatic horizontal scale to 10k concurrency", "Corrupt files isolated in DLQ"],
+      cons: ["Client must poll or use WebSockets for completion notification"],
+      verdict: "Standard enterprise pattern for media ingestion."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Optimizing Lambda Memory for CPU-Intensive Sharp Resizing" badge="Performance Tuning">
+    <p>
+      AWS Lambda allocates vCPU proportionally to configured memory. While image resizing requires ~150MB of RAM, configuring Lambda with <strong>1769MB (1 full dedicated vCPU)</strong> drops execution time from 2,400ms down to 650ms.
+    </p>
+    <p>
+      Because Lambda charges <code>Gigabyte-Seconds</code>, running a faster 1769MB function actually costs <strong>less money</strong> than running a slow 512MB function.
+    </p>
+  </DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Client Upload Time</strong>: Reduced from 8.2s to <strong>450ms</strong> via direct S3 pre-signed URLs.</li>
+    <li><strong>Cost</strong>: 200,000 daily transformations cost just <strong>$1.15 per day</strong> on AWS Lambda.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Media Ingestion Rule:</strong> Never route multi-megabyte file uploads through your API servers. Always issue S3 Pre-Signed URLs and process events asynchronously.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="image-processing-pipeline"
+    questions={[
+      {
+        question: "Why should image uploads never pass directly through an API Gateway HTTP endpoint?",
+        options: [
+          "API Gateway has a hard 10MB payload size limit and charges for inbound data transfer.",
+          "API Gateway cannot connect to Amazon S3.",
+          "API Gateway requires all payloads to be base64 encoded strings.",
+          "API Gateway does not support SSL encryption."
+        ],
+        correctIndex: 0,
+        explanation: "API Gateway has a strict 10MB payload limit and is cost-inefficient for binary streams. S3 Pre-Signed URLs bypass API Gateway completely, supporting files up to 5TB."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html" target="_blank" rel="noopener">Uploading with Presigned URLs</a></li>
+  </ul>
+</section>

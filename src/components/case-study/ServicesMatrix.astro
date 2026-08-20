@@ -1,0 +1,140 @@
+---
+import Badge from '../ui/Badge.astro';
+
+interface ServiceItem {
+  name: string;
+  category: string;
+  role: string;
+}
+
+interface Props {
+  services: ServiceItem[];
+}
+
+const { services = [] } = Astro.props;
+---
+
+<div class="services-matrix-card glass-card">
+  <div class="matrix-header">
+    <h3>AWS Services Architecture Rationale</h3>
+    <p class="matrix-subtitle">Concrete reasons why these specific services were chosen over alternatives</p>
+  </div>
+
+  <div class="services-table-wrapper">
+    <table class="services-table">
+      <thead>
+        <tr>
+          <th style="width: 28%;">Service</th>
+          <th style="width: 20%;">Category</th>
+          <th style="width: 52%;">Architectural Rationale ("Why this service?")</th>
+        </tr>
+      </thead>
+      <tbody>
+        {services.map((svc) => (
+          <tr>
+            <td class="service-name-cell">
+              <span class="service-icon-dot"></span>
+              <strong class="service-name">{svc.name}</strong>
+            </td>
+            <td>
+              <Badge variant="category" type={svc.category} size="sm" />
+            </td>
+            <td class="service-role-cell">
+              {svc.role}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .services-matrix-card {
+    margin: var(--space-6) 0;
+    padding: var(--space-6);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+  }
+
+  .matrix-header {
+    margin-bottom: var(--space-4);
+  }
+
+  .matrix-header h3 {
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+  }
+
+  .matrix-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .services-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .services-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .services-table th {
+    background: var(--bg-surface-2);
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.775rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-medium);
+  }
+
+  .services-table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  .services-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .services-table tr:hover td {
+    background: var(--bg-surface-2);
+  }
+
+  .service-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .service-icon-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--aws-orange);
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6);
+    flex-shrink: 0;
+  }
+
+  .service-name {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+
+  .service-role-cell {
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+</style>

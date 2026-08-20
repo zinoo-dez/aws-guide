@@ -1,0 +1,69 @@
+/* Keyframe Animations & Micro-Interactions */
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(255, 153, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 153, 0, 0.3);
+  }
+}
+
+@keyframes floatOrb {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.05);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glow-aws-pulse {
+  animation: pulseGlow 4s infinite ease-in-out;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.25;
+  animation: floatOrb 12s infinite ease-in-out;
+}
+
+.ambient-orb-orange {
+  background: radial-gradient(circle, #FF9900 0%, rgba(255, 153, 0, 0) 70%);
+}
+
+.ambient-orb-blue {
+  background: radial-gradient(circle, #38BDF8 0%, rgba(56, 189, 248, 0) 70%);
+}
+
+.ambient-orb-violet {
+  background: radial-gradient(circle, #818CF8 0%, rgba(129, 140, 248, 0) 70%);
+}

@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="404 - Architecture Not Found | AWS Architecture Guild">
+  <div class="not-found-page container">
+    <div class="not-found-card glass-card">
+      <span class="error-code">404</span>
+      <h1 class="not-found-title">Architecture Topology Not Found</h1>
+      <p class="not-found-desc">
+        The requested case study or module route does not exist or has been refactored into a higher-tier service.
+      </p>
+      <div class="not-found-actions">
+        <a href="/" class="btn btn-primary">Return to Guild Home</a>
+        <a href="/case-studies" class="btn btn-secondary">Browse Case Studies</a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found-page {
+    padding: var(--space-16) 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+  }
+
+  .not-found-card {
+    text-align: center;
+    padding: var(--space-12) var(--space-8);
+    max-width: 580px;
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .error-code {
+    font-family: var(--font-mono);
+    font-size: 4.5rem;
+    font-weight: 800;
+    color: var(--aws-orange);
+    line-height: 1;
+    display: block;
+    margin-bottom: var(--space-2);
+  }
+
+  .not-found-title {
+    font-size: 1.6rem;
+    color: var(--text-display);
+    margin-bottom: var(--space-3);
+  }
+
+  .not-found-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-6);
+  }
+
+  .not-found-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+</style>

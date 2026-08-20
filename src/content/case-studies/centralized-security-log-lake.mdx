@@ -1,0 +1,202 @@
+---
+moduleId: "06-data-analytics"
+title: "Centralized Enterprise Security Log Lake: CloudTrail & VPC Flow Logs"
+summary: "Aggregating multi-account security telemetry into an immutable S3 lake with AWS Glue crawlers and Athena forensics."
+difficulty: "Advanced"
+estimatedMinutes: 8
+industry: "Enterprise Security & Compliance"
+architectureStyle:
+  - "Security Data Lake"
+  - "Multi-Account"
+awsServices:
+  - name: "AWS CloudTrail"
+    category: "Security"
+    role: "Captures API activity and management events across all AWS member accounts."
+  - name: "Amazon VPC Flow Logs"
+    category: "Networking"
+    role: "Records all accepted and rejected IP network flows across subnets."
+  - name: "Amazon S3 Object Lock"
+    category: "Storage"
+    role: "Provides immutable WORM (Write Once, Read Many) compliance storage."
+  - name: "Amazon Athena"
+    category: "Analytics"
+    role: "Executes threat hunting SQL queries across billions of audit records."
+keyMetrics:
+  - label: "Forensic Query Time"
+    value: "25s (from 4 hrs)"
+    trend: "down"
+  - label: "Log Immutability"
+    value: "100% WORM"
+    trend: "up"
+  - label: "Log Storage Cost"
+    value: "-75% with Glacier"
+    trend: "down"
+tags:
+  - "cloudtrail"
+  - "vpc-flow-logs"
+  - "athena"
+  - "security-lake"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Security Incident Investigation Time", value: "< 2 mins", trend: "down" },
+  { label: "Audit Log Tamper Proofing", value: "100% WORM", trend: "up" },
+  { label: "Long-Term Retention Cost", value: "-75% Glacier", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An enterprise with 50 AWS accounts struggled to investigate security incidents. Audit logs were scattered across local CloudWatch log groups in different regions and accounts. When a security compromise occurred, gathering and correlating logs took over 4 hours, delaying threat containment.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Centralized Multi-Account Aggregation</strong>: Ingest CloudTrail and VPC Flow Logs into a dedicated Log Archive AWS account.</li>
+    <li><strong>Tamper-Proof Immutability</strong>: Enforce S3 Object Lock in Compliance Mode to satisfy SOC2/HIPAA mandates.</li>
+    <li><strong>Rapid Forensic Querying</strong>: Search billions of IP connection records with SQL in seconds.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Centralized Security Log Lake Architecture"
+    diagram={`graph TD
+    subgraph MemberAccounts [50+ AWS Member Accounts]
+        Acc1[Production Account: CloudTrail & Flow Logs]
+        Acc2[Staging Account: CloudTrail & Flow Logs]
+        Acc3[Security Account: GuardDuty]
+    end
+
+    subgraph LogArchiveAccount [Dedicated Log Archive AWS Account]
+        S3Bucket[(Central S3 Log Bucket: Object Lock WORM)]
+        Glue[AWS Glue Crawler & Schema Catalog]
+        Athena[Amazon Athena SQL Engine]
+        SecOps([SecOps Threat Hunting Console])
+    end
+
+    Acc1 -->|Direct Cross-Account S3 Delivery| S3Bucket
+    Acc2 -->|Direct Cross-Account S3 Delivery| S3Bucket
+    Acc3 -->|Direct Cross-Account S3 Delivery| S3Bucket
+    
+    Glue -.->|Catalog Partitions| S3Bucket
+    Athena -->|Execute Threat Queries| S3Bucket
+    SecOps --> Athena
+
+    style S3Bucket fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Athena fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style MemberAccounts fill:#0B101C,stroke:#F59E0B,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon S3 Object Lock",
+      category: "Storage",
+      role: "Prevents log deletion or alteration by any IAM user (even root) for a designated retention period (e.g. 7 years)."
+    },
+    {
+      name: "AWS CloudTrail Org Trail",
+      category: "Security",
+      role: "Automatically enables logging for all current and future accounts created in AWS Organizations."
+    },
+    {
+      name: "Amazon Athena",
+      category: "Analytics",
+      role: "Allows SecOps to run SQL queries identifying suspicious IP addresses across all VPCs simultaneously."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "CloudWatch Logs in Each Member Account",
+      pros: ["Zero cross-account setup"],
+      cons: ["Scattered logs", "High log ingestion fees ($0.50/GB)", "Compromised accounts can delete logs"],
+      verdict: "High security and financial risk."
+    },
+    {
+      name: "Centralized S3 Object Lock Lake (Chosen)",
+      isChosen: true,
+      pros: ["Immutable WORM storage", "Single pane of glass", "Low-cost S3 Standard + Glacier lifecycle ($0.023/GB down to $0.00099/GB)"],
+      cons: ["Requires cross-account S3 bucket policy"],
+      verdict: "Best practice enterprise security architecture."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Sample Athena Threat Hunting Query: Rejected Port Scans" badge="Forensic SQL">
+
+```
+SELECT srcaddr, dstaddr, dstport, protocol, count(*) as reject_count
+FROM vpc_flow_logs_db.vpc_flow_logs
+WHERE action = 'REJECT' 
+  AND year = '2026' AND month = '08' AND day = '20'
+GROUP BY srcaddr, dstaddr, dstport, protocol
+ORDER BY reject_count DESC
+LIMIT 50;
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Incident Response Time</strong>: Investigation duration reduced from 4 hours to <strong>2 minutes</strong>.</li>
+    <li><strong>Compliance Audit</strong>: 100% pass rate for SOC2 Type II audit trail requirements.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Security Rule:</strong> Always send security logs to a separate, isolated <strong>Log Archive Account</strong> with S3 Object Lock. A compromised developer account must never have permissions to erase audit traces.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="centralized-security-log-lake"
+    questions={[
+      {
+        question: "What makes S3 Object Lock in Compliance Mode superior for audit logs?",
+        options: [
+          "It compresses logs by 50%.",
+          "No user, including the AWS root account, can delete or overwrite the objects until the retention period expires.",
+          "It automatically runs Athena queries.",
+          "It encrypts files with plain text."
+        ],
+        correctIndex: 1,
+        explanation: "In Compliance Mode, a protected object version cannot be overwritten or deleted by any user, including the root user in your AWS account."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html" target="_blank" rel="noopener">Creating an Organization Trail</a></li>
+  </ul>
+</section>

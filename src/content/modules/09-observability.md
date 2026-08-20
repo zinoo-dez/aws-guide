@@ -1,0 +1,48 @@
+---
+moduleNumber: 9
+title: "Observability, Monitoring & Reliability"
+tagline: "The 3 Pillars of Telemetry: Metrics, Logs, Traces & Automated Self-Healing"
+description: "Master production telemetry on AWS. Learn how to correlate Amazon CloudWatch Metrics/Logs/Alarms, AWS X-Ray distributed traces, CloudTrail audit trails, and AWS Config compliance rules to minimize MTTR."
+theme: "Observability, SRE & Incident Self-Healing"
+keyServices:
+  - "Amazon CloudWatch (Metrics & Logs)"
+  - "AWS X-Ray"
+  - "AWS CloudTrail"
+  - "AWS Config"
+  - "AWS Fault Injection Simulator (FIS)"
+difficulty: "Advanced"
+estimatedHours: 6
+icon: "eye"
+order: 9
+learningOutcomes:
+  - "Instrument distributed systems with AWS X-Ray and OpenTelemetry to identify microservice bottleneck traces."
+  - "Design CloudWatch Composite Alarms combining error rates, p99 latency spikes, and CPU saturation."
+  - "Automate incident response with EventBridge and Lambda self-healing remediation routines."
+  - "Implement continuous FinOps monitoring to detect runaway Lambda loops and unattached cloud storage."
+---
+
+## Observability vs Monitoring
+Monitoring tells you *when* a system is failing; Observability allows you to understand *why* a complex, distributed failure mode is occurring:
+
+```mermaid
+graph TD
+    App[Distributed Microservices] -->|W3C Trace Context| XRay[AWS X-Ray]
+    App -->|Structured JSON Logs| CWLogs[CloudWatch Logs Insights]
+    App -->|Custom High-Res Metrics| CWMetrics[CloudWatch Metrics]
+    
+    CWMetrics -->|Evaluate Anomaly Band| Alarm{Composite Alarm}
+    Alarm -->|Threshold Breached| EventBridge[Amazon EventBridge]
+    EventBridge -->|Trigger Remediation| HealingLambda[Self-Healing Lambda]
+    EventBridge -->|Escalate Incident| Slack[Slack / PagerDuty Alert]
+    HealingLambda -->|Auto-Restart / Flush Cache| App
+
+    style CWMetrics fill:#18223B,stroke:#FB7185,stroke-width:2px,color:#fff
+    style EventBridge fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
+    style HealingLambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+```
+
+---
+
+## Case Studies in This Module
+1. **[Automated Incident Detection & Self-Healing](/case-studies/distributed-failure-self-healing)**: CloudWatch composite alarms triggering automated Lambda remediation and PagerDuty escalations.
+2. **[Cloud Cost Anomaly Sentinel](/case-studies/cost-anomaly-sentinel)**: Proactive FinOps detection engine hunting zombie EBS volumes, unattached Elastic IPs, and idle RDS instances.

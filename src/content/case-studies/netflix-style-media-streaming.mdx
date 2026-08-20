@@ -1,0 +1,232 @@
+---
+moduleId: "10-capstones"
+title: "Netflix-Scale Global Video Streaming: Transcoding, Origin Shielding & CDN"
+summary: "Architecting a global adaptive bitrate (HLS/DASH) video platform with chunked parallel transcoding, CloudFront Origin Shield, and signed URL tokenized security."
+difficulty: "Expert"
+estimatedMinutes: 12
+industry: "Digital Media & Entertainment"
+architectureStyle:
+  - "Distributed Media Streaming"
+  - "Global CDN"
+awsServices:
+  - name: "AWS Elemental MediaConvert"
+    category: "Media"
+    role: "Broadcast-grade file-based video transcoding into multi-bitrate HLS and MPEG-DASH packages."
+  - name: "Amazon CloudFront & Origin Shield"
+    category: "Networking"
+    role: "Delivers encrypted HLS video chunks (.ts / .m4s) from edge PoPs with 99.9% cache hit ratios."
+  - name: "AWS Step Functions"
+    category: "Serverless"
+    role: "Orchestrates multi-stage media ingestion, DRM licensing, thumbnail sprite generation, and catalog metadata."
+  - name: "Amazon DynamoDB Global Tables"
+    category: "Database"
+    role: "Stores global user viewing history and resume playback timestamps with < 1s multi-region sync."
+keyMetrics:
+  - label: "Video Start Time (VMAF 95)"
+    value: "< 400ms"
+    trend: "down"
+  - label: "Edge Cache Hit Ratio"
+    value: "99.85%"
+    trend: "up"
+  - label: "Global Concurrent Viewers"
+    value: "2,000,000+"
+    trend: "up"
+tags:
+  - "streaming"
+  - "mediaconvert"
+  - "cloudfront"
+  - "step-functions"
+  - "capstone"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Video Playback Start Time", value: "< 400ms", trend: "down" },
+  { label: "Global Edge Hit Rate", value: "99.85%", trend: "up" },
+  { label: "Concurrent Video Streams", value: "2.5M Peak", trend: "up" },
+  { label: "Transcode Pipeline Speed", value: "8x Real-Time", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A global video streaming service streams content to over 15 million subscribers across Smart TVs, mobile devices, and web browsers. When a blockbuster season premiered, 2.5 million users clicked "Play" simultaneously. The previous monolithic transcoding and streaming server architecture collapsed under bandwidth saturation, and mobile users on slow cellular connections suffered severe video buffering.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Adaptive Bitrate Streaming (ABR)</strong>: Transcode raw master video (ProRes / 4K MP4) into 7 distinct HLS bitrates (from 1080p 6Mbps down to 360p 400Kbps).</li>
+    <li><strong>Sub-400ms Video Startup Time</strong>: First video segment (.m4s) must reach player in &lt;400ms globally.</li>
+    <li><strong>DRM & Tokenized Access</strong>: Prevent unauthorized video hotlinking and screen scraping using CloudFront Signed Cookies.</li>
+    <li><strong>Multi-Region Resume Sync</strong>: Allow users to pause on a Smart TV in New York and resume on a phone in London with exact second accuracy.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Global End-to-End Media Ingestion & Delivery Architecture"
+    diagram={`graph TD
+    Creator([Content Studio Upload]) -->|S3 Multi-Part Upload| S3Mezz[(S3 Mezzanine Raw Bucket)]
+    S3Mezz --> StepFn[AWS Step Functions Media Orchestrator]
+    
+    subgraph TranscodeWorkflow [Media Processing Pipeline]
+        StepFn --> MediaConvert[AWS Elemental MediaConvert: HLS/DASH]
+        StepFn --> Rekognition[Amazon Rekognition: Content Safety]
+        StepFn --> Sprites[Lambda: Trick-Play Thumbnail Sprites]
+    end
+
+    MediaConvert -->|Output HLS Packages| S3Delivery[(S3 Delivery Origin Bucket)]
+    
+    subgraph EdgeDeliveryTier [Global Edge Network]
+        S3Delivery --> OriginShield[CloudFront Origin Shield: us-east-1]
+        OriginShield --> RegionalEdge[Regional Edge Caches: Europe, Asia, US]
+        RegionalEdge --> ViewerPoP[450+ Edge PoPs]
+    end
+
+    Viewer([Subscriber Smart TV / Mobile]) -->|Signed Cookie Auth| ViewerPoP
+    Viewer -->|Sync Playback Progress| DDBGlobal[(DynamoDB Global Tables)]
+
+    style S3Delivery fill:#101728,stroke:#FF9900,stroke-width:1px,color:#fff
+    style MediaConvert fill:#18223B,stroke:#EC4899,stroke-width:2px,color:#fff
+    style OriginShield fill:#18223B,stroke:#38BDF8,stroke-width:2px,color:#fff
+    style DDBGlobal fill:#0B101C,stroke:#10B981,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Master Upload</strong>: Studio uploads 4K ProRes master file to S3 Mezzanine bucket via accelerated S3 Transfer Acceleration.</li>
+    <li><strong>Orchestrated Transcoding</strong>: AWS Step Functions triggers AWS Elemental MediaConvert with accelerated transcoding, generating 7 adaptive bitrate streams and fragmented MP4 packages.</li>
+    <li><strong>Origin Shield Consolidation</strong>: CloudFront Origin Shield caches video segments, reducing origin read load by 99.85% even during viral premieres.</li>
+    <li><strong>Global Playback State</strong>: Playback positions (e.g. <code>timestamp: 01:24:18</code>) sync to Amazon DynamoDB Global Tables with sub-second replication across `us-east-1`, `eu-west-1`, and `ap-northeast-1`.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS Elemental MediaConvert",
+      category: "Media",
+      role: "Broadcast-quality video transcoding supporting automated ABR ladders, Dolby Audio, and closed captions."
+    },
+    {
+      name: "CloudFront with Origin Shield",
+      category: "Networking",
+      role: "Acts as a centralized caching shield protecting the S3 origin bucket from thousands of simultaneous regional cache miss requests."
+    },
+    {
+      name: "DynamoDB Global Tables",
+      category: "Database",
+      role: "Provides multi-region active-active replication with single-digit ms read/write latency for playback checkpoints."
+    },
+    {
+      name: "AWS Step Functions",
+      category: "Serverless",
+      role: "Provides visual state machine workflow management with automated retries and error handling for multi-step media pipelines."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Self-Managed FFmpeg EC2 Transcoding Clusters",
+      pros: ["Open-source software control"],
+      cons: ["Extreme server maintenance", "Idle cluster costs when no uploads occur", "Slow queue handling during studio batch dumps"],
+      verdict: "High operational overhead."
+    },
+    {
+      name: "AWS Elemental MediaConvert + Serverless Step Functions (Chosen)",
+      isChosen: true,
+      pros: ["Zero server management", "Broadcast-grade quality & accelerated transcoding", "Pay strictly per minute of video transcoded", "Automatic integration with S3 & CloudFront"],
+      cons: ["Proprietary AWS managed API"],
+      verdict: "Gold standard for media streaming platforms."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Adaptive Bitrate (ABR) HLS Output Configuration" badge="MediaConvert JSON">
+
+```
+{
+  "OutputGroups": [{
+    "Name": "HLS Group",
+    "OutputGroupSettings": {
+      "Type": "HLS_GROUP_SETTINGS",
+      "HlsGroupSettings": {
+        "SegmentLength": 4,
+        "MinSegmentLength": 0,
+        "Destination": "s3://streaming-delivery-prod/hls/",
+        "DirectoryStructure": "SINGLE_DIRECTORY"
+      }
+    },
+    "Outputs": [
+      { "VideoDescription": { "Width": 1920, "Height": 1080, "Bitrate": 6000000, "CodecSettings": { "Codec": "H_264" } } },
+      { "VideoDescription": { "Width": 1280, "Height": 720,  "Bitrate": 3000000, "CodecSettings": { "Codec": "H_264" } } },
+      { "VideoDescription": { "Width": 854,  "Height": 480,  "Bitrate": 1500000, "CodecSettings": { "Codec": "H_264" } } },
+      { "VideoDescription": { "Width": 640,  "Height": 360,  "Bitrate": 600000,  "CodecSettings": { "Codec": "H_264" } } }
+    ]
+  }]
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Startup Latency</strong>: 380ms median Time-to-First-Frame worldwide.</li>
+    <li><strong>Zero Buffering Incidents</strong> during 2.5 million concurrent live viewer spike.</li>
+    <li><strong>Storage Cost Optimization</strong>: S3 Intelligent-Tiering automatically moved unviewed catalog titles to Archive tier, cutting storage spend by 62%.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Media Streaming Principle:</strong> High-scale streaming is won at the edge. ABR chunking (4-second segments) paired with CloudFront Origin Shield turns massive multi-gigabyte video files into lightweight, cacheable HTTP chunks that never overwhelm backend infrastructure.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="netflix-style-media-streaming"
+    questions={[
+      {
+        question: "Why is 4-second video segment duration preferred for modern HLS video delivery over legacy 10-second segments?",
+        options: [
+          "Because 10-second segments are prohibited by Apple.",
+          "4-second segments allow players to adjust bitrate faster when network conditions change and drop initial video startup latency.",
+          "To reduce CloudFront request counts.",
+          "Because MediaConvert cannot transcode 10-second chunks."
+        ],
+        correctIndex: 1,
+        explanation: "Shorter 4-second segments allow client players to switch bitrates rapidly during bandwidth drops, minimizing buffering and reducing initial video startup lag."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://aws.amazon.com/mediaconvert/" target="_blank" rel="noopener">AWS Elemental MediaConvert</a></li>
+    <li><a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/origin-shield.html" target="_blank" rel="noopener">CloudFront Origin Shield for Video Streaming</a></li>
+  </ul>
+</section>

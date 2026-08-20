@@ -1,0 +1,188 @@
+---
+moduleId: "04-databases"
+title: "Sub-Millisecond Gaming Leaderboard: Redis Sorted Sets & DynamoDB"
+summary: "Handling 100,000 score updates per second with real-time global player ranking using ElastiCache Redis Sorted Sets and persistent DynamoDB archiving."
+difficulty: "Advanced"
+estimatedMinutes: 8
+industry: "Gaming & Interactive Media"
+architectureStyle:
+  - "High-Throughput In-Memory"
+  - "Low Latency"
+awsServices:
+  - name: "Amazon ElastiCache (Redis)"
+    category: "Database"
+    role: "Provides in-memory Sorted Sets (ZADD, ZREVRANGE) for real-time global player rank calculations in O(log N)."
+  - name: "Amazon DynamoDB"
+    category: "Database"
+    role: "Persistent history and player profile record storage."
+  - name: "Amazon Kinesis Data Streams"
+    category: "Analytics"
+    role: "Buffers high-frequency score submission events for asynchronous persistence."
+keyMetrics:
+  - label: "Write Throughput"
+    value: "100,000 / sec"
+    trend: "up"
+  - label: "Rank Query Latency"
+    value: "< 1ms"
+    trend: "down"
+  - label: "Data Durability"
+    value: "100%"
+    trend: "up"
+tags:
+  - "redis"
+  - "leaderboard"
+  - "dynamodb"
+  - "gaming"
+featured: false
+order: 3
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Score Ingestion Throughput", value: "100k+ / sec", trend: "up" },
+  { label: "Top 100 Rank Latency", value: "0.6ms", trend: "down" },
+  { label: "Data Persistence SLA", value: "100%", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A multiplayer mobile game with 10 million daily active users updates player scores every time a match finishes. Generating a real-time global leaderboard using relational SQL (<code>SELECT player_id, score, RANK() OVER (ORDER BY score DESC)...</code>) locked table indexes and took over 8 seconds per query.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Sub-Millisecond Rank Retrieval</strong>: Fetch the global Top 100 or a player's exact rank in &lt; 2ms.</li>
+    <li><strong>Massive Write Ingestion</strong>: Process up to 100,000 score submissions/second during tournaments.</li>
+    <li><strong>Zero Data Loss</strong>: Ensure historical scores survive in-memory cache restarts.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Real-Time Leaderboard System Architecture"
+    diagram={`graph LR
+    GameClient([Mobile Game Client]) -->|Submit Match Score| APIGW[API Gateway]
+    APIGW --> IngestLambda[Score Ingest Lambda]
+    
+    IngestLambda -->|1. Atomic ZADD / ZINCRBY < 1ms| Redis[(ElastiCache Redis: Sorted Sets)]
+    IngestLambda -->|2. Stream Event| Kinesis[Amazon Kinesis Stream]
+    
+    Kinesis --> PersistLambda[Persistence Worker Lambda]
+    PersistLambda -->|Async Batch Write| DDB[(Amazon DynamoDB Long-Term Store)]
+
+    style Redis fill:#18223B,stroke:#FB7185,stroke-width:2px,color:#fff
+    style IngestLambda fill:#101728,stroke:#A78BFA,stroke-width:1px,color:#fff
+    style DDB fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon ElastiCache Redis (Sorted Sets)",
+      category: "Database",
+      role: "Provides skip-list backed Sorted Sets that calculate rank dynamically with O(log(N)) complexity."
+    },
+    {
+      name: "Amazon DynamoDB",
+      category: "Database",
+      role: "Durable persistent store for all historical matches and player season stats."
+    },
+    {
+      name: "Amazon Kinesis Data Streams",
+      category: "Analytics",
+      role: "Decouples in-memory cache updates from slower persistent database writes."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Relational SQL ORDER BY + Window Functions",
+      pros: ["Simple SQL table schema"],
+      cons: ["O(N log N) full table scans", "High disk lock contention", "Unusable at scale"],
+      verdict: "Fails completely under gaming concurrency."
+    },
+    {
+      name: "Redis Sorted Sets + Async DynamoDB (Chosen)",
+      isChosen: true,
+      pros: ["0.6ms response times", "Pre-calculated real-time ranks", "Asynchronous persistent durability"],
+      cons: ["Requires dual write architecture"],
+      verdict: "The industry standard pattern for global gaming leaderboards."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Redis Sorted Set Commands for Ranking" badge="Redis Commands">
+
+```
+# Add or update player score atomically:
+ZADD leaderboard:season_5 98450 "player_u9921"
+
+# Retrieve top 10 players instantly (Rank 1 to 10):
+ZREVRANGE leaderboard:season_5 0 9 WITHSCORES
+
+# Fetch specific player's exact rank:
+ZREVRANK leaderboard:season_5 "player_u9921"
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Query Latency</strong>: Dropped from 8,400ms down to <strong>0.6ms</strong>.</li>
+    <li><strong>Throughput</strong>: Succeeded in handling 115,000 score submissions/sec during global championship tournament.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Algorithm Architecture:</strong> When data requires real-time sorted ranking, use data structures built for sorting (Skip Lists in Redis Sorted Sets) rather than forcing relational databases to sort millions of rows on demand.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="realtime-gaming-leaderboard"
+    questions={[
+      {
+        question: "What is the computational time complexity of inserting or updating a score in a Redis Sorted Set (ZADD)?",
+        options: [
+          "O(1)",
+          "O(log N), where N is the number of elements in the sorted set.",
+          "O(N^2)",
+          "O(N log N)"
+        ],
+        correctIndex: 1,
+        explanation: "Redis Sorted Sets are implemented with a skip list and hash map, providing O(log N) time complexity for insertion, update, and rank calculation."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://aws.amazon.com/redis/" target="_blank" rel="noopener">Amazon ElastiCache for Redis</a></li>
+  </ul>
+</section>

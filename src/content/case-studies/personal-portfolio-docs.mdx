@@ -1,0 +1,221 @@
+---
+moduleId: "01-static-website"
+title: "Zero-Maintenance Developer Portfolio & Docs Site"
+summary: "Host a blazing-fast documentation and portfolio platform on S3 + CloudFront + ACM for under $0.50/month with automated TLS."
+difficulty: "Beginner"
+estimatedMinutes: 6
+industry: "Developer Tools"
+architectureStyle:
+  - "Serverless Static"
+  - "CDN Edge"
+awsServices:
+  - name: "Amazon S3"
+    category: "Storage"
+    role: "Stores pre-rendered static HTML, CSS, JavaScript, and images."
+  - name: "Amazon CloudFront"
+    category: "Networking"
+    role: "Global CDN caching assets at edge locations and terminating TLS."
+  - name: "Route 53"
+    category: "Networking"
+    role: "DNS resolution with Alias records routing apex domain to CloudFront."
+  - name: "AWS Certificate Manager (ACM)"
+    category: "Security"
+    role: "Free, auto-renewing SSL/TLS certificates."
+keyMetrics:
+  - label: "Monthly Cost"
+    value: "< $0.50"
+    trend: "down"
+  - label: "TTFB at Edge"
+    value: "18ms"
+    trend: "down"
+  - label: "Lighthouse Performance"
+    value: "100/100"
+    trend: "up"
+tags:
+  - "s3"
+  - "cloudfront"
+  - "route53"
+  - "acm"
+  - "static-hosting"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Monthly Operating Cost", value: "$0.32/mo", trend: "down" },
+  { label: "Global Edge TTFB", value: "18ms", trend: "down" },
+  { label: "Availability SLA", value: "99.99%", trend: "up" },
+  { label: "Maintenance Overhead", value: "0 hrs", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An individual developer or open-source team wants to host technical documentation and a portfolio site. Traditional VPS hosting (e.g. EC2, DigitalOcean) requires managing OS security patches, SSH keys, Nginx configurations, and renewing Let's Encrypt certificates every 90 days.
+  </p>
+  <p>
+    If a project goes viral on Hacker News or Reddit, a single virtual server frequently crashes from connection pool exhaustion.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Zero Maintenance</strong>: Zero operating systems or server processes to patch.</li>
+    <li><strong>Global Performance</strong>: Sub-50ms Time to First Byte (TTFB) globally.</li>
+    <li><strong>Budget Ceiling</strong>: Under $1.00 per month for baseline traffic.</li>
+    <li><strong>Security</strong>: HTTPS enforcement with automated TLS certificate renewals.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Global Serverless Static Distribution"
+    diagram={`graph LR
+    User([End User Browser]) -->|HTTPS:443 / TLS 1.3| R53[Amazon Route 53 DNS]
+    R53 -->|Alias Record| CF[Amazon CloudFront CDN]
+    CF -->|Cache Hit: Return in 15ms| User
+    CF -->|Cache Miss: SigV4 Auth OAC| S3[(Amazon S3 Private Bucket)]
+    ACM[AWS Certificate Manager] -.->|Auto-Renew TLS Cert| CF
+
+    style CF fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style S3 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style R53 fill:#101728,stroke:#818CF8,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>DNS Query</strong>: User requests <code>docs.example.com</code>; Route 53 resolves to the closest CloudFront Edge PoP.</li>
+    <li><strong>Edge Caching</strong>: CloudFront serves cached assets with gzip/brotli compression.</li>
+    <li><strong>Origin Access Control (OAC)</strong>: On a cache miss, CloudFront signs the request with AWS SigV4 to read from the private S3 bucket. Direct public access to S3 is disabled.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon S3",
+      category: "Storage",
+      role: "Provides 11 9s of durability for static assets without managing disk partitions."
+    },
+    {
+      name: "Amazon CloudFront",
+      category: "Networking",
+      role: "Terminates TLS at 450+ edge locations and shields the S3 origin from traffic surges."
+    },
+    {
+      name: "Amazon Route 53",
+      category: "Networking",
+      role: "Provides free Alias record queries directly to CloudFront distributions."
+    },
+    {
+      name: "AWS Certificate Manager",
+      category: "Security",
+      role: "Issues free public SSL/TLS certificates with automatic DNS validation renewal."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Dedicated EC2 Instance + Nginx",
+      pros: ["Familiar Linux environment"],
+      cons: ["$5-$20/month minimum", "Requires OS updates", "Single point of failure"],
+      verdict: "Over-engineered and costly for static assets."
+    },
+    {
+      name: "S3 Static Website Hosting (Public Bucket)",
+      pros: ["Simple S3 config"],
+      cons: ["Does not support HTTPS on custom domains", "Bucket must be publicly exposed"],
+      verdict: "Insecure and deprecated for modern web."
+    },
+    {
+      name: "S3 + CloudFront OAC + Route 53 (Chosen)",
+      isChosen: true,
+      pros: ["Private S3 bucket", "Global edge caching", "Free automated HTTPS", "< $0.50/mo"],
+      cons: ["Requires CloudFront cache invalidation on deployments"],
+      verdict: "Industry standard gold standard for static web hosting."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="S3 Origin Access Control (OAC) Bucket Policy" badge="Security Hardening">
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": {
+    "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+    "Effect": "Allow",
+    "Principal": {
+      "Service": "cloudfront.amazonaws.com"
+    },
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::my-docs-bucket/*",
+    "Condition": {
+      "StringEquals": {
+        "AWS:SourceArn": "arn:aws:cloudfront::123456789012:distribution/EDFDVBD632BHDS5"
+      }
+    }
+  }
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Cost</strong>: $0.32/month (within AWS Free Tier limits).</li>
+    <li><strong>Latency</strong>: 18ms median TTFB in North America and Europe.</li>
+    <li><strong>Lighthouse Score</strong>: 100 Performance, 100 Best Practices, 100 SEO.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Best Practice:</strong> Always use CloudFront Origin Access Control (OAC) with S3 rather than legacy Origin Access Identity (OAI) to support all AWS regions and SSE-KMS encryption.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="personal-portfolio-docs"
+    questions={[
+      {
+        question: "Why can't S3 website endpoints be used directly with custom domain SSL/TLS certificates?",
+        options: [
+          "S3 does not support custom domain names.",
+          "S3 website endpoints only serve plain HTTP over custom domains; HTTPS requires CloudFront.",
+          "S3 requires an Application Load Balancer for DNS resolution.",
+          "ACM certificates cannot be requested in us-east-1."
+        ],
+        correctIndex: 1,
+        explanation: "Amazon S3 website endpoints do not support HTTPS with custom domain names. To serve HTTPS with your own domain, you must place Amazon CloudFront in front of S3."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" target="_blank" rel="noopener">Restricting Access to an Amazon S3 Origin</a></li>
+  </ul>
+</section>

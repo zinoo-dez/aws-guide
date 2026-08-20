@@ -1,0 +1,60 @@
+---
+moduleNumber: 0
+title: "Foundations & Mental Models"
+tagline: "The First-Principles Mindset: Global Infrastructure, Cost Guardrails & Architecture Literacy"
+description: "Master the mental models required to evaluate cloud architectures. Learn how AWS Regions, Availability Zones, and Edge locations interact, how the Shared Responsibility Model shapes security, and how to read complex system topologies."
+theme: "Infrastructure Mental Models & Cost Mindset"
+keyServices:
+  - "AWS Global Infrastructure"
+  - "IAM"
+  - "AWS Budgets"
+  - "Cost Anomaly Detection"
+  - "AWS Organizations"
+difficulty: "Beginner"
+estimatedHours: 3
+icon: "compass"
+order: 0
+learningOutcomes:
+  - "Deconstruct ambiguous business requirements into Well-Architected technical constraints."
+  - "Understand the physical reality of Regions, Availability Zones, Local Zones, and Edge Locations."
+  - "Set up foolproof billing alarms, anomaly detectors, and SCP budget guardrails."
+  - "Translate logical multi-tier diagrams into physical AWS VPC and subnet topologies."
+---
+
+## Why Foundations Matter
+Most developers jump straight into provisioning EC2 instances or Lambda functions without understanding the underlying physical constraints of cloud computing. 
+
+When you design on AWS, every architectural choice is bound by:
+1. **The Speed of Light & Network Latency**: Cross-AZ latency (~1-2ms) vs Cross-Region latency (~50-120ms).
+2. **Failure Domains**: A process will crash, an instance will fail, and an entire Availability Zone can lose power. Resiliency means designing so that isolated failures do not cause catastrophic outages.
+3. **The Shared Responsibility Model**: AWS manages the security *OF* the cloud (physical data centers, hypervisors, core network); you are 100% responsible for security *IN* the cloud (IAM policies, encryption, OS patches, data firewalls).
+4. **The Cost Velocity**: Unlike on-premise hardware where CapEx is fixed, cloud OpEx can scale uncontrollably within hours if recursive loops or unthrottled queues are deployed.
+
+---
+
+## The Well-Architected Framework: The 6 Pillars
+Throughout every case study in this academy, architectures are evaluated against AWS's 6 core pillars:
+
+```mermaid
+graph TD
+    WAF[AWS Well-Architected Framework]
+    WAF --> P1[1. Operational Excellence]
+    WAF --> P2[2. Security & Least Privilege]
+    WAF --> P3[3. Reliability & Resiliency]
+    WAF --> P4[4. Performance Efficiency]
+    WAF --> P5[5. Cost Optimization]
+    WAF --> P6[6. Sustainability]
+
+    style WAF fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style P2 fill:#101728,stroke:#F59E0B,stroke-width:1px,color:#fff
+    style P3 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style P5 fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+```
+
+---
+
+## Case Studies in This Module
+Explore the following hands-on case studies to solidify these mental models:
+1. **[Case Study Methodology](/case-studies/case-study-methodology)**: How to deconstruct real enterprise architectures from business requirements.
+2. **[Free-Tier & Budget Trap Guard](/case-studies/free-tier-budget-guard)**: Setting up automated billing circuit breakers and anomaly alerts.
+3. **[Diagram Literacy & Subnet Mappings](/case-studies/diagram-literacy)**: Translating logical architecture diagrams into physical VPC networks.

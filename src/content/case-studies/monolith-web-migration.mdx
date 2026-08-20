@@ -1,0 +1,218 @@
+---
+moduleId: "02-compute-basics"
+title: "Legacy Monolith Migration: Lift & Shift to Multi-AZ Auto Scaling EC2"
+summary: "Re-platforming a stateful Django/Rails monolith to horizontal Auto Scaling EC2 behind an ALB with externalized Redis session storage."
+difficulty: "Intermediate"
+estimatedMinutes: 9
+industry: "Enterprise Web Applications"
+architectureStyle:
+  - "Horizontal Scaling"
+  - "Multi-AZ Compute"
+awsServices:
+  - name: "Amazon EC2"
+    category: "Compute"
+    role: "Runs stateless Django/Rails web application workers."
+  - name: "Auto Scaling Groups (ASG)"
+    category: "Compute"
+    role: "Maintains target capacity and scales instances based on CPU utilization."
+  - name: "Application Load Balancer (ALB)"
+    category: "Networking"
+    role: "Distributes incoming traffic across healthy EC2 targets in multiple AZs."
+  - name: "Amazon ElastiCache (Redis)"
+    category: "Database"
+    role: "Externalizes user session states to enable safe horizontal scaling."
+keyMetrics:
+  - label: "Availability"
+    value: "99.95%"
+    trend: "up"
+  - label: "Scale-Out Latency"
+    value: "4 mins"
+    trend: "down"
+  - label: "Single-Point-of-Failure"
+    value: "0"
+    trend: "down"
+tags:
+  - "ec2"
+  - "asg"
+  - "alb"
+  - "monolith"
+  - "redis"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Uptime SLA", value: "99.95%", trend: "up" },
+  { label: "Single Points of Failure", value: "0", trend: "down" },
+  { label: "Traffic Surge Handling", value: "10x Baseline", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An established e-learning company hosted their monolithic Django application on a single large on-premise virtual machine. Whenever traffic surged during exams or flash sales, the server froze. Furthermore, user sessions were stored in local server memory, meaning rebooting or patching the server forcibly logged out all active students.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Zero Downtime During Deployments</strong>: Eliminate maintenance maintenance windows.</li>
+    <li><strong>Multi-AZ Fault Tolerance</strong>: Survive an entire AWS Availability Zone failure.</li>
+    <li><strong>Stateless Compute</strong>: Externalize user sessions and file uploads.</li>
+    <li><strong>Minimal Code Refactoring</strong>: Must run existing Django codebase without rewriting into microservices.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Multi-AZ Auto Scaling EC2 Architecture"
+    diagram={`graph TD
+    Client([Internet Traffic]) -->|HTTPS:443| ALB[Application Load Balancer]
+    
+    subgraph VPC [Amazon VPC]
+        subgraph AZ_A [Availability Zone A - Private Subnet]
+            EC2_A[EC2 App Instance]
+        end
+        
+        subgraph AZ_B [Availability Zone B - Private Subnet]
+            EC2_B[EC2 App Instance]
+        end
+
+        subgraph DataTier [Isolated Data Subnets]
+            Redis[(ElastiCache Redis: Session Store)]
+            RDS[(Amazon RDS PostgreSQL Multi-AZ)]
+        end
+    end
+
+    ALB --> EC2_A
+    ALB --> EC2_B
+    EC2_A --> Redis
+    EC2_B --> Redis
+    EC2_A --> RDS
+    EC2_B --> RDS
+
+    style ALB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style EC2_A fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style EC2_B fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style Redis fill:#0B101C,stroke:#FB7185,stroke-width:1px,color:#fff
+    style RDS fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Session Externalization</strong>: Configured Django session backend to store sessions in Amazon ElastiCache Redis cluster.</li>
+    <li><strong>Asset Offloading</strong>: User-uploaded media files were redirected from local disk storage to an Amazon S3 bucket.</li>
+    <li><strong>Golden AMI & Launch Template</strong>: Automated image baking with Packer/EC2 Image Builder, enabling new instances to boot and pass ALB health checks in under 3 minutes.</li>
+    <li><strong>Auto Scaling Target Tracking</strong>: ASG automatically adds instances when average CPU utilization exceeds 65%.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Auto Scaling Groups",
+      category: "Compute",
+      role: "Maintains desired instance count across multiple AZs and replaces unhealthy instances automatically."
+    },
+    {
+      name: "Application Load Balancer",
+      category: "Networking",
+      role: "Terminates SSL/TLS and performs HTTP health check polling on /healthz."
+    },
+    {
+      name: "Amazon ElastiCache Redis",
+      category: "Database",
+      role: "Sub-millisecond distributed session store shared across all EC2 instances."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Single Oversized EC2 Instance",
+      pros: ["Zero refactoring of local sessions"],
+      cons: ["Single point of failure", "Downtime during updates", "Wasted idle compute costs"],
+      verdict: "High risk."
+    },
+    {
+      name: "Horizontal ASG + ElastiCache (Chosen)",
+      isChosen: true,
+      pros: ["High availability across AZs", "Scales dynamically with exam traffic", "Zero-downtime rolling updates"],
+      cons: ["Requires external session management configuration"],
+      verdict: "Ideal migration path for traditional monoliths."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="EC2 Launch Template User Data Script" badge="Automation">
+
+```
+#!/bin/bash
+# Fetch latest app bundle from S3
+aws s3 cp s3://app-deployments/django-latest.tar.gz /app/bundle.tar.gz
+cd /app && tar -xzf bundle.tar.gz
+# Inject DB & Redis credentials from SSM Parameter Store
+export DATABASE_URL=$(aws ssm get-parameter --name "/prod/db_url" --with-decryption --query "Parameter.Value" --output text)
+export REDIS_URL=$(aws ssm get-parameter --name "/prod/redis_url" --query "Parameter.Value" --output text)
+# Start Gunicorn server
+gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 4
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Uptime</strong>: Increased from 98.2% to <strong>99.97%</strong>.</li>
+    <li><strong>Rollout Downtime</strong>: Reduced from 45 minutes per release to <strong>0 minutes</strong> using ASG instance refresh.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Monolith Rule:</strong> You do not need to rewrite your application into microservices to achieve high availability. Externalizing session state and local file storage allows any legacy monolith to scale horizontally across multiple AZs.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="monolith-web-migration"
+    questions={[
+      {
+        question: "Why must user sessions be externalized to Redis before enabling horizontal Auto Scaling?",
+        options: [
+          "Because EC2 instances cannot read cookies.",
+          "Because subsequent user requests may be routed to a different EC2 instance that lacks the local in-memory session.",
+          "Because ALB does not support sticky sessions under any circumstance.",
+          "To reduce EC2 CPU utilization by 90%."
+        ],
+        correctIndex: 1,
+        explanation: "Without a centralized session store, an ALB routing a user's second request to a different instance will cause the user to appear logged out."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html" target="_blank" rel="noopener">EC2 Auto Scaling User Guide</a></li>
+  </ul>
+</section>

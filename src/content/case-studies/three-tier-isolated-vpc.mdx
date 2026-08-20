@@ -1,0 +1,219 @@
+---
+moduleId: "05-networking-security"
+title: "Production 3-Tier Enterprise VPC: Complete Network Isolation"
+summary: "Architecting a secure enterprise VPC topology with public ingress, private application compute subnets, and air-gapped isolated database subnets."
+difficulty: "Intermediate"
+estimatedMinutes: 9
+industry: "Enterprise Security & Banking"
+architectureStyle:
+  - "Defense in Depth"
+  - "Zero-Trust VPC"
+awsServices:
+  - name: "Amazon VPC"
+    category: "Networking"
+    role: "Core network boundary partitioned across 3 Availability Zones."
+  - name: "NAT Gateway"
+    category: "Networking"
+    role: "Provides outbound-only internet connectivity for private compute tasks."
+  - name: "Security Groups & NACLs"
+    category: "Security"
+    role: "Stateful instance-level firewalls and stateless subnet-level packet filters."
+  - name: "AWS WAF"
+    category: "Security"
+    role: "Web application firewall attached to the public ALB for OWASP Top 10 mitigation."
+keyMetrics:
+  - label: "Internet Attack Surface"
+    value: "0% for DB Tier"
+    trend: "down"
+  - label: "Compliance Alignment"
+    value: "SOC2 & PCI-DSS"
+    trend: "up"
+  - label: "Multi-AZ Redundancy"
+    value: "3 AZs"
+    trend: "up"
+tags:
+  - "vpc"
+  - "security-groups"
+  - "nat-gateway"
+  - "subnets"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Database Inbound Exposure", value: "0.0%", trend: "down" },
+  { label: "Compliance Readiness", value: "SOC2 & PCI-DSS", trend: "up" },
+  { label: "AZ Availability", value: "3 AZs Active", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An enterprise SaaS company preparing for SOC2 Type II and PCI-DSS certification discovered their application servers and PostgreSQL databases were residing in a single flat VPC subnet. If an attacker exploited a remote code execution vulnerability in the public web app, they gained direct network access to the database credentials and customer records.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>3-Tier Network Isolation</strong>: Strict separation of Ingress, Compute, and Persistence.</li>
+    <li><strong>Air-Gapped Database Subnets</strong>: Databases must have zero internet gateway or NAT gateway routes.</li>
+    <li><strong>Least-Privilege Security Group Chaining</strong>: Ingress rules reference security group IDs, never IP addresses.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Enterprise 3-Tier VPC Architecture"
+    diagram={`graph TD
+    User([Public Internet]) -->|HTTPS:443| WAF[AWS WAF]
+    WAF --> IGW[Internet Gateway]
+    
+    subgraph VPC [Amazon VPC: 10.0.0.0/16]
+        subgraph Tier1 [Public Subnets - 10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24]
+            ALB[Public ALB]
+            NAT[NAT Gateways]
+        end
+
+        subgraph Tier2 [Private Compute Subnets - 10.0.10.0/24, 10.0.20.0/24, 10.0.30.0/24]
+            ECS[ECS Fargate Tasks / App Servers]
+        end
+
+        subgraph Tier3 [Isolated Data Subnets - 10.0.100.0/24, 10.0.200.0/24, 10.0.300.0/24]
+            Aurora[(Amazon Aurora Multi-AZ Cluster)]
+        end
+    end
+
+    IGW --> ALB
+    ALB -->|Forward Port 8080 (SG Chained)| ECS
+    ECS -->|Query Port 5432 (SG Chained)| Aurora
+    ECS -->|Outbound Software Patches| NAT
+    NAT --> IGW
+
+    style Tier1 fill:#18223B,stroke:#FF9900,stroke-width:1px,color:#fff
+    style Tier2 fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style Tier3 fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon VPC",
+      category: "Networking",
+      role: "Provides isolated private networking across 3 Availability Zones."
+    },
+    {
+      name: "Security Group Chaining",
+      category: "Security",
+      role: "Database SG allows inbound port 5432 ONLY from App-SG-ID, making IP address changes irrelevant."
+    },
+    {
+      name: "NAT Gateways (Per AZ)",
+      category: "Networking",
+      role: "Ensures AZ independence so an outage in one AZ NAT gateway does not disrupt compute in others."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Single NAT Gateway Across All AZs",
+      pros: ["Saves ~$64/month on NAT hourly fees"],
+      cons: ["Cross-AZ data transfer fees", "Single point of failure: if AZ-A dies, compute in AZ-B loses internet"],
+      verdict: "Acceptable for Dev; prohibited for Production."
+    },
+    {
+      name: "Dedicated NAT Gateway Per AZ (Chosen)",
+      isChosen: true,
+      pros: ["Zero cross-AZ single points of failure", "Full compliance with enterprise high availability SLAs"],
+      cons: ["Additional ~$32/mo per AZ baseline"],
+      verdict: "Mandatory for production enterprise systems."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Security Group Chaining Terraform Blueprint" badge="IaC Recipe">
+
+```
+# Database Security Group allowing traffic ONLY from the Application SG
+resource "aws_security_group" "database" {
+  name        = "prod-aurora-db-sg"
+  vpc_id      = aws_vpc.main.id
+  description = "Allow inbound PostgreSQL strictly from App tier"
+
+  ingress {
+    description     = "PostgreSQL from App Tier"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id] # SG Chaining!
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>100% SOC2 Compliance</strong> achieved on initial audit round.</li>
+    <li><strong>Zero Inbound Exploitation Surface</strong> for database tier.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Security Rule:</strong> Never write CIDR IP blocks (e.g. <code>10.0.10.0/24</code>) in internal application and database Security Groups. Always chain Security Group IDs to create immutable access control.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="three-tier-isolated-vpc"
+    questions={[
+      {
+        question: "Why should an Isolated Database Subnet have NO route to an Internet Gateway or NAT Gateway?",
+        options: [
+          "Because AWS charges $100/hr for database internet routes.",
+          "To guarantee that databases are physically incapable of initiating outbound connections or receiving inbound internet packets.",
+          "Because Aurora databases cannot use DNS.",
+          "To force database backups to run only on EC2."
+        ],
+        correctIndex: 1,
+        explanation: "By having no route to IGW or NAT, even if a database server is compromised, it cannot exfiltrate data to an external internet endpoint."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html" target="_blank" rel="noopener">VPC with Public and Private Subnets</a></li>
+  </ul>
+</section>

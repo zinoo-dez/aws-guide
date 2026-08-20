@@ -1,0 +1,242 @@
+---
+interface CaseStudyItem {
+  slug: string;
+  title: string;
+  moduleId: string;
+  difficulty: string;
+  estimatedMinutes: number;
+}
+
+interface ModuleItem {
+  id: string;
+  moduleNumber: number;
+  title: string;
+  theme: string;
+}
+
+interface Props {
+  currentModuleId?: string;
+  currentCaseSlug?: string;
+  allModules: ModuleItem[];
+  allCaseStudies: CaseStudyItem[];
+}
+
+const { currentModuleId, currentCaseSlug, allModules = [], allCaseStudies = [] } = Astro.props;
+
+// Sort modules by moduleNumber
+const sortedModules = [...allModules].sort((a, b) => a.moduleNumber - b.moduleNumber);
+---
+
+<aside class="module-sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Curriculum Navigation</span>
+    <span class="sidebar-count">{allModules.length} Modules</span>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Curriculum Modules">
+    <div class="module-accordion-list">
+      {sortedModules.map((mod) => {
+        const isActiveModule = currentModuleId === mod.id;
+        const moduleCases = allCaseStudies.filter(c => c.moduleId === mod.id);
+
+        return (
+          <div class={`sidebar-module-group ${isActiveModule ? 'is-active-module' : ''}`}>
+            <a href={`/modules/${mod.id}`} class="module-header-link">
+              <span class="module-num-badge">{mod.moduleNumber}</span>
+              <span class="module-title-text">{mod.title}</span>
+            </a>
+
+            {moduleCases.length > 0 && (
+              <div class="module-cases-sublist">
+                {moduleCases.map((cs) => {
+                  const isCurrent = currentCaseSlug === cs.slug;
+                  return (
+                    <a 
+                      href={`/case-studies/${cs.slug}`} 
+                      class={`sidebar-case-link ${isCurrent ? 'is-current-case' : ''}`}
+                    >
+                      <span class="case-bullet"></span>
+                      <span class="case-link-title">{cs.title}</span>
+                      <span class="case-min">{cs.estimatedMinutes}m</span>
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </nav>
+</aside>
+
+<style>
+  .module-sidebar {
+    width: 100%;
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    position: sticky;
+    top: 80px;
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .sidebar-title {
+    font-family: var(--font-display);
+    font-size: 0.775rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+  }
+
+  .sidebar-count {
+    font-size: 0.7rem;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .module-accordion-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .sidebar-module-group {
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-2);
+    border: 1px solid transparent;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+  }
+
+  .sidebar-module-group.is-active-module {
+    border-color: var(--aws-orange-border);
+    background: linear-gradient(180deg, rgba(255, 153, 0, 0.04) 0%, var(--bg-surface-2) 100%);
+  }
+
+  .module-header-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.55rem 0.65rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    transition: background var(--transition-fast);
+  }
+
+  .module-header-link:hover {
+    background: var(--bg-surface-hover);
+    color: var(--aws-orange);
+  }
+
+  .module-num-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface-3);
+    border: 1px solid var(--border-medium);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .is-active-module .module-num-badge {
+    background: var(--aws-orange);
+    color: #000;
+    border-color: var(--aws-orange);
+  }
+
+  .module-title-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .module-cases-sublist {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 0.5rem 0.5rem 1.25rem;
+    gap: 0.2rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .sidebar-case-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    padding: 0.3rem 0.45rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .sidebar-case-link:hover {
+    background: var(--bg-surface-3);
+    color: var(--text-primary);
+  }
+
+  .sidebar-case-link.is-current-case {
+    background: var(--aws-orange-bg);
+    color: var(--aws-orange);
+    font-weight: 600;
+  }
+
+  .case-bullet {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .is-current-case .case-bullet {
+    background: var(--aws-orange);
+    box-shadow: 0 0 6px var(--aws-orange);
+  }
+
+  .case-link-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .case-min {
+    font-size: 0.675rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+</style>

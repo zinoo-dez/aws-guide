@@ -1,0 +1,199 @@
+---
+moduleId: "01-static-website"
+title: "Viral Startup Marketing Site: Surviving 50,000 Req/Sec Surges"
+summary: "How a high-growth startup architected an edge-cached static landing page with 99.8% cache hit ratios to survive Super Bowl and Product Hunt traffic spikes."
+difficulty: "Intermediate"
+estimatedMinutes: 8
+industry: "Fintech & Consumer SaaS"
+architectureStyle:
+  - "Edge Caching"
+  - "High Concurrency"
+awsServices:
+  - name: "Amazon CloudFront"
+    category: "Networking"
+    role: "Absorbs massive traffic spikes and delivers cached assets from edge PoPs."
+  - name: "Amazon S3"
+    category: "Storage"
+    role: "Origin storage for optimized images, video assets, and HTML bundles."
+  - name: "AWS WAF"
+    category: "Security"
+    role: "Protects against DDoS layer 7 floods, scrapers, and malicious bots."
+  - name: "CloudFront Functions"
+    category: "Compute"
+    role: "Sub-millisecond URL rewrites and A/B testing cookie redirects at the edge."
+keyMetrics:
+  - label: "Peak Ingress"
+    value: "52,000 req/s"
+    trend: "up"
+  - label: "Edge Cache Hit Rate"
+    value: "99.8%"
+    trend: "up"
+  - label: "Origin CPU Spike"
+    value: "0%"
+    trend: "neutral"
+tags:
+  - "cloudfront"
+  - "waf"
+  - "edge-compute"
+  - "ddos-protection"
+featured: true
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Peak Traffic Handled", value: "52,400 req/s", trend: "up" },
+  { label: "Edge Cache Hit Ratio", value: "99.82%", trend: "up" },
+  { label: "Origin Bandwidth Load", value: "< 0.2%", trend: "down" },
+  { label: "DDoS Requests Blocked", value: "1.4M / hr", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A high-growth fintech startup was featured during a national television broadcast and on the front page of Product Hunt simultaneously. In past launches, their dynamic server infrastructure crashed within 40 seconds under 15,000 concurrent connections, resulting in lost conversions and brand damage.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Absorb 50k+ req/sec</strong> without scaling backend servers.</li>
+    <li><strong>Sub-30ms Global Latency</strong> for all marketing landing pages.</li>
+    <li><strong>DDoS & Bot Mitigation</strong> using AWS WAF rate limiting.</li>
+    <li><strong>Edge A/B Testing</strong> without client-side layout shift (CLS).</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="High-Scale Edge Distribution & Security Shield"
+    diagram={`graph LR
+    Traffic([50,000+ Req/Sec Ingress]) --> WAF[AWS WAF: Rate Limiting & Bot Control]
+    WAF --> CF[CloudFront Edge Network]
+    CF --> CFF[CloudFront Function: A/B Routing]
+    CF -->|99.8% Cache Hits| User([Return Edge Cached Asset])
+    CF -->|0.2% Origin Requests| S3[(S3 Origin Private Bucket)]
+
+    style WAF fill:#18223B,stroke:#F59E0B,stroke-width:2px,color:#fff
+    style CF fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style S3 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>WAF Layer 7 Inspection</strong>: Filters malicious bot traffic, brute force requests, and IP-based rate limiting (e.g. max 2,000 requests per 5 minutes per IP).</li>
+    <li><strong>Edge Function A/B Routing</strong>: Inspects user cookies at the edge and rewrites URI to variant A (<code>/index.html</code>) or variant B (<code>/v2/index.html</code>) in &lt;1ms.</li>
+    <li><strong>Origin Shielding</strong>: A centralized CloudFront Origin Shield caches requests between regional edge caches and S3, ensuring S3 receives fewer than 100 requests/sec even during peak viral loads.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon CloudFront",
+      category: "Networking",
+      role: "Absorbs concurrency across 450+ PoPs globally with automatic Tier 1 transit."
+    },
+    {
+      name: "AWS WAF",
+      category: "Security",
+      role: "Blocks DDoS floods, SQLi, and scrapers before they hit the origin."
+    },
+    {
+      name: "CloudFront Functions",
+      category: "Compute",
+      role: "Executes lightweight JavaScript at edge locations for instant A/B test routing."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Dynamic SSR Node.js Clusters",
+      pros: ["Dynamic rendering per request"],
+      cons: ["Extreme server autoscaling lag", "High cost ($800+/mo during spikes)", "Prone to database connection exhaustion"],
+      verdict: "Unsuited for static marketing pages."
+    },
+    {
+      name: "Static Generation + CloudFront Origin Shield (Chosen)",
+      isChosen: true,
+      pros: ["Near-infinite edge scalability", "Zero backend servers to scale", "99.8% cache hit ratio", "Costs < $25 during spike"],
+      cons: ["Dynamic personalization requires client-side API hydration"],
+      verdict: "Superior architecture for high-stakes marketing launches."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="CloudFront Function A/B Cookie Router" badge="Edge Compute">
+
+```
+function handler(event) {
+  var request = event.request;
+  var cookies = request.cookies;
+
+  // Check if visitor has existing AB test cookie
+  if (cookies.ab_group && cookies.ab_group.value === 'b') {
+    request.uri = request.uri.replace('/index.html', '/variant-b.html');
+  }
+  return request;
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Peak Load</strong>: Handled 52,400 requests/sec with 0 downtime.</li>
+    <li><strong>Bandwidth Offload</strong>: 99.82% of all traffic served from edge cache.</li>
+    <li><strong>Infrastructure Bill</strong>: Total AWS cost for the viral launch was $21.40.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Scale Law:</strong> When scaling for unknown traffic spikes, the best way to handle 50,000 requests/second is to never let them reach your servers in the first place.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="startup-marketing-site"
+    questions={[
+      {
+        question: "What is the primary benefit of enabling CloudFront Origin Shield?",
+        options: [
+          "It automatically encrypts S3 buckets with KMS.",
+          "It provides an extra centralized caching layer that consolidates origin requests, dramatically reducing origin load.",
+          "It replaces AWS Route 53 DNS servers.",
+          "It eliminates the need for AWS WAF."
+        ],
+        correctIndex: 1,
+        explanation: "Origin Shield is a centralized caching tier in an AWS region closest to your origin. It reduces origin requests from dozens of regional edge caches down to a single consolidated stream."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/origin-shield.html" target="_blank" rel="noopener">Using Amazon CloudFront Origin Shield</a></li>
+  </ul>
+</section>

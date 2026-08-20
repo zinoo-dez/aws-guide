@@ -1,0 +1,211 @@
+---
+moduleId: "07-containers"
+title: "Monolith to Microservices: Strangler Fig Pattern on AWS Fargate"
+summary: "Incrementally decomposing a monolithic application into Dockerized microservices deployed on Amazon ECS with AWS Fargate and ALB path-based routing."
+difficulty: "Advanced"
+estimatedMinutes: 9
+industry: "Fintech & SaaS"
+architectureStyle:
+  - "Strangler Fig"
+  - "ECS Fargate"
+awsServices:
+  - name: "Amazon ECS (AWS Fargate)"
+    category: "Containers"
+    role: "Runs containerized microservices without managing EC2 instances or cluster capacity."
+  - name: "Amazon ECR"
+    category: "Containers"
+    role: "Stores secure, immutable Docker container images with vulnerability scanning."
+  - name: "Application Load Balancer"
+    category: "Networking"
+    role: "Routes incoming requests to the legacy monolith or new microservices using path-based rules."
+  - name: "AWS Cloud Map"
+    category: "Containers"
+    role: "Provides private DNS service discovery for internal microservice-to-microservice communication."
+keyMetrics:
+  - label: "Release Velocity"
+    value: "4x Faster"
+    trend: "up"
+  - label: "Cluster Maintenance"
+    value: "0 Server OS Updates"
+    trend: "down"
+  - label: "Migration Downtime"
+    value: "0 mins"
+    trend: "down"
+tags:
+  - "ecs"
+  - "fargate"
+  - "microservices"
+  - "strangler-fig"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Deployment Frequency", value: "Daily (from monthly)", trend: "up" },
+  { label: "Infrastructure Management", value: "0 EC2 instances", trend: "down" },
+  { label: "Migration Downtime", value: "0 minutes", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A fintech SaaS company maintained a 10-year-old monolithic Rails application. Deploying a minor bug fix to the authentication code required re-testing and deploying the entire 2-gigabyte codebase. A single memory leak in the billing module crashed the entire customer-facing platform.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Zero-Risk Migration</strong>: Avoid a high-risk "Big Bang" rewrite; incrementally strangle features out of the monolith.</li>
+    <li><strong>No Server Maintenance</strong>: The team had no dedicated Kubernetes/SRE engineers and needed serverless container management.</li>
+    <li><strong>Path-Based Ingress</strong>: Transparently route traffic between legacy monolith and new microservices without breaking API URLs.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Strangler Fig Migration Topology on ECS Fargate"
+    diagram={`graph TD
+    Client([Public API Traffic]) --> ALB[Application Load Balancer]
+    
+    subgraph RoutingRules [ALB Path-Based Routing]
+        ALB -->|Default /* (Legacy)| LegacyMonolith[Legacy Monolith EC2 ASG]
+        ALB -->|/api/auth/* (Migrated)| AuthFargate[Auth Microservice - Fargate Task]
+        ALB -->|/api/payments/* (Migrated)| PayFargate[Payment Microservice - Fargate Task]
+        ALB -->|/api/notifications/*| NotifFargate[Notification Microservice - Fargate Task]
+    end
+
+    ECR[(Amazon ECR Container Registry)] -.->|Pull Images| AuthFargate
+    ECR -.->|Pull Images| PayFargate
+    
+    CloudMap[AWS Cloud Map Private DNS] -.->|Internal Service Discovery| PayFargate
+
+    style ALB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style AuthFargate fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff
+    style PayFargate fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff
+    style LegacyMonolith fill:#0B101C,stroke:#FB7185,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Identify Boundary</strong>: Isolated the <code>/api/auth</code> domain as the first candidate for extraction.</li>
+    <li><strong>Build Containerized Service</strong>: Packaged the new lightweight Node.js/Go service into a Docker image and pushed to Amazon ECR.</li>
+    <li><strong>Deploy to ECS Fargate</strong>: Created an ECS Service with Target Tracking autoscaling (50% CPU).</li>
+    <li><strong>Shift ALB Rule</strong>: Updated the ALB listener rule to route <code>/api/auth/*</code> to the Fargate Target Group while keeping all other traffic on the legacy monolith.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon ECS with AWS Fargate",
+      category: "Containers",
+      role: "Runs containers with task-level CPU and memory isolation without managing worker node EC2 VMs."
+    },
+    {
+      name: "Application Load Balancer",
+      category: "Networking",
+      role: "Provides path-based routing rules that decouple external URLs from internal service locations."
+    },
+    {
+      name: "Amazon ECR",
+      category: "Containers",
+      role: "Stores encrypted container images with automated Clair vulnerability scanning."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Big Bang Rewrite to Amazon EKS (Kubernetes)",
+      pros: ["Complete Kubernetes feature set"],
+      cons: ["High operational complexity", "High risk of 6-12 month delivery delay", "Requires dedicated SREs"],
+      verdict: "Unacceptable business risk."
+    },
+    {
+      name: "Incremental Strangler Fig on ECS Fargate (Chosen)",
+      isChosen: true,
+      pros: ["Zero downtime migration", "Zero node management", "Continuous value delivery every sprint"],
+      cons: ["Temporary dual-running costs for monolith and microservices"],
+      verdict: "Safest, most cost-effective path to modern microservices."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="ALB Listener Rule Path Routing Pattern" badge="Terraform">
+
+```
+resource "aws_lb_listener_rule" "auth_microservice" {
+  listener_arn = aws_lb_listener.front_end.arn
+  priority     = 10
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.auth_fargate.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/auth/*", "/oauth/*"]
+    }
+  }
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Release Speed</strong>: Feature deployment frequency increased from monthly to <strong>multiple times daily</strong>.</li>
+    <li><strong>Blast Radius Containment</strong>: Payment processing outages zeroed out due to complete container process isolation.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Strangler Fig Law:</strong> Never attempt a 100% ground-up rewrite of a production monolith. Use ALB path routing and containerized Fargate tasks to extract one domain at a time.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="monolith-to-containers"
+    questions={[
+      {
+        question: "What is the key operational difference between ECS on EC2 vs ECS on AWS Fargate?",
+        options: [
+          "ECS Fargate only supports PHP applications.",
+          "With AWS Fargate, AWS manages the underlying server instances, OS patching, and cluster capacity; with EC2 launch type, you must manage the EC2 hosts.",
+          "ECS on EC2 is serverless.",
+          "Fargate does not support Docker containers."
+        ],
+        correctIndex: 1,
+        explanation: "AWS Fargate is the serverless compute engine for containers. You define task size (CPU/RAM), and AWS manages the infrastructure lifecycle."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html" target="_blank" rel="noopener">AWS Fargate on Amazon ECS</a></li>
+  </ul>
+</section>

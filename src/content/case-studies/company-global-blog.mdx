@@ -1,0 +1,195 @@
+---
+moduleId: "01-static-website"
+title: "Global Enterprise Blog: Edge-Localized Content & Security Headers"
+summary: "Delivering dynamic language localization, security headers (CSP, HSTS), and sub-20ms edge redirects using CloudFront Functions and S3."
+difficulty: "Intermediate"
+estimatedMinutes: 7
+industry: "Media & Enterprise SaaS"
+architectureStyle:
+  - "Edge Compute"
+  - "Localization"
+awsServices:
+  - name: "Amazon CloudFront"
+    category: "Networking"
+    role: "Global edge CDN terminating TLS and caching localized assets."
+  - name: "CloudFront Functions"
+    category: "Compute"
+    role: "Inspects Viewer Accept-Language headers and injects strict security headers."
+  - name: "Amazon S3"
+    category: "Storage"
+    role: "Multi-language static asset repository."
+  - name: "Amazon Route 53"
+    category: "Networking"
+    role: "Latency-based DNS routing with health checks."
+keyMetrics:
+  - label: "Edge TTFB"
+    value: "14ms"
+    trend: "down"
+  - label: "Security Header Rating"
+    value: "A+"
+    trend: "up"
+  - label: "Origin Request Load"
+    value: "< 1%"
+    trend: "down"
+tags:
+  - "cloudfront"
+  - "security-headers"
+  - "localization"
+  - "edge"
+featured: false
+order: 3
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Global Edge TTFB", value: "14ms", trend: "down" },
+  { label: "Security Header Rating", value: "A+", trend: "up" },
+  { label: "Localization Latency", value: "< 1ms", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An international enterprise publishes technical articles in 6 languages. Using traditional origin servers for language detection caused severe latency spikes for European and Asian users. Additionally, enterprise compliance mandated strict security headers (Content Security Policy, HSTS, X-Frame-Options) across all static assets.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Automatic Geo/Language Redirection</strong>: Route users to <code>/es/</code>, <code>/de/</code>, <code>/ja/</code> without hitting the S3 origin.</li>
+    <li><strong>A+ Security Rating</strong>: Inject HSTS, CSP, and XSS protection headers on every response.</li>
+    <li><strong>Zero Origin Latency Penalty</strong>: Edge compute execution overhead must be under 2ms.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Edge Localization & Security Header Pipeline"
+    diagram={`graph LR
+    User([Global Visitor]) -->|1. Viewer Request| CF[CloudFront Edge PoP]
+    CF -->|2. Fast Viewer Request JS| CFF_Lang[CloudFront Function: Geo & Language Router]
+    CFF_Lang -->|3. Route /de/ or /ja/| Cache{Edge Cache Hit?}
+    Cache -->|Yes| CFF_Sec[CloudFront Function: Security Headers]
+    Cache -->|No: Fetch Origin| S3[(Amazon S3 Multilingual Bucket)]
+    S3 --> CFF_Sec
+    CFF_Sec -->|4. Return with CSP/HSTS| User
+
+    style CF fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style CFF_Lang fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style CFF_Sec fill:#101728,stroke:#F59E0B,stroke-width:1px,color:#fff
+    style S3 fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "CloudFront Functions",
+      category: "Compute",
+      role: "Sub-millisecond lightweight runtime executing at 450+ CloudFront PoPs with 1/6th the cost of Lambda@Edge."
+    },
+    {
+      name: "Amazon CloudFront",
+      category: "Networking",
+      role: "Global CDN terminating TLS 1.3 and caching assets across 450+ Points of Presence."
+    },
+    {
+      name: "Amazon S3",
+      category: "Storage",
+      role: "Stores partitioned static language trees (e.g. /en/, /es/, /de/)."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Lambda@Edge",
+      pros: ["Full Node.js runtime", "Can make external network calls", "Up to 30s timeout"],
+      cons: ["Higher latency (10-40ms)", "Higher cost ($0.60 per 1M requests)"],
+      verdict: "Overkill for simple header and URI manipulations."
+    },
+    {
+      name: "CloudFront Functions (Chosen)",
+      isChosen: true,
+      pros: ["Sub-millisecond execution", "Extremely cheap ($0.10 per 1M requests)", "Runs at all PoPs"],
+      cons: ["10KB code limit", "No network access or file system access"],
+      verdict: "Ideal choice for header injection, redirects, and URI rewrites."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Security Headers Injection CloudFront Function" badge="Edge Code">
+
+```
+function handler(event) {
+  var response = event.response;
+  var headers = response.headers;
+
+  headers['strict-transport-security'] = { value: 'max-age=63072000; includeSubDomains; preload' };
+  headers['content-security-policy'] = { value: "default-src 'self'; img-src 'self' data: https:; script-src 'self';" };
+  headers['x-content-type-options'] = { value: 'nosniff' };
+  headers['x-frame-options'] = { value: 'DENY' };
+  headers['referrer-policy'] = { value: 'strict-origin-when-cross-origin' };
+
+  return response;
+}
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Security Score</strong>: Upgraded from B to <strong>A+ on Mozilla Observatory</strong>.</li>
+    <li><strong>Global P95 TTFB</strong>: Reduced from 180ms to <strong>22ms worldwide</strong>.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Edge Compute Rule:</strong> Use CloudFront Functions for ultra-fast, stateless header and URL transformations. Reserve Lambda@Edge only when your edge logic requires external HTTP calls or complex libraries.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="company-global-blog"
+    questions={[
+      {
+        question: "Which of the following is a limitation of CloudFront Functions compared to Lambda@Edge?",
+        options: [
+          "CloudFront Functions cannot execute JavaScript.",
+          "CloudFront Functions cannot make external network calls to third-party APIs.",
+          "CloudFront Functions only run in us-east-1.",
+          "CloudFront Functions do not support viewer request events."
+        ],
+        correctIndex: 1,
+        explanation: "CloudFront Functions are strictly isolated, sub-millisecond execution sandboxes that cannot make outbound network requests or access dynamic databases."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html" target="_blank" rel="noopener">CloudFront Functions Overview</a></li>
+  </ul>
+</section>

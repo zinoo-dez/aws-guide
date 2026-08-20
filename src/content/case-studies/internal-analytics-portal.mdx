@@ -1,0 +1,181 @@
+---
+moduleId: "02-compute-basics"
+title: "Internal Analytics Portal: Scheduled Auto-Scaling & Spot Fleets"
+summary: "Saving 70% on compute bills for a corporate analytics tool using scheduled scaling policies, EC2 Spot Instances, and EBS snapshots."
+difficulty: "Intermediate"
+estimatedMinutes: 7
+industry: "Enterprise Corporate Systems"
+architectureStyle:
+  - "Cost Optimization"
+  - "Spot Compute"
+awsServices:
+  - name: "Amazon EC2 Spot Instances"
+    category: "Compute"
+    role: "Provides up to 90% discount for fault-tolerant analytics workers."
+  - name: "Auto Scaling Scheduled Actions"
+    category: "Compute"
+    role: "Automatically provisions capacity before business hours and scales to zero at night."
+  - name: "Amazon EBS"
+    category: "Storage"
+    role: "High-throughput gp3 volumes storing analytical caches."
+keyMetrics:
+  - label: "Compute Cost Reduction"
+    value: "72%"
+    trend: "down"
+  - label: "Nighttime Waste"
+    value: "0%"
+    trend: "down"
+tags:
+  - "ec2"
+  - "spot-instances"
+  - "scheduled-scaling"
+  - "ebs"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Monthly Cloud Compute Bill", value: "-72%", trend: "down" },
+  { label: "Off-Hours Idle Spend", value: "$0.00", trend: "down" },
+  { label: "Daily Peak Performance", value: "100% Reliable", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A multinational retail enterprise maintains an internal analytics portal used exclusively by employees between 8:00 AM and 6:00 PM on weekdays. The previous architecture ran 12 high-memory instances (<code>r6i.2xlarge</code>) 24 hours a day, 7 days a week, wasting over 65% of its compute budget overnight and on weekends.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Predictable Business Hour Readiness</strong>: Capacity must be fully warmed up by 7:45 AM Monday–Friday.</li>
+    <li><strong>Significant Cost Reduction</strong>: Target > 60% compute budget savings.</li>
+    <li><strong>Interruption Resilience</strong>: Seamlessly handle Spot Instance termination notices using mixed instance fleets.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Scheduled Scaling & Mixed Instance Fleet Topology"
+    diagram={`graph TD
+    Sched[Auto Scaling Scheduled Action: Cron 7:45 AM Mon-Fri] --> ASG[EC2 Auto Scaling Mixed Fleet]
+    ASG -->|20% Base On-Demand| OnDemand[On-Demand Instances: r6i.2xlarge]
+    ASG -->|80% Heavy Workers| Spot[Spot Fleet: r6i / r6a / r5 instances]
+    
+    NightSched[Scheduled Action: Cron 6:30 PM Mon-Fri] -.->|Scale to 0 or 1 Base| ASG
+
+    style Sched fill:#18223B,stroke:#10B981,stroke-width:2px,color:#fff
+    style ASG fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Spot fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Auto Scaling Scheduled Actions",
+      category: "Compute",
+      role: "Increases desired capacity at 7:45 AM before employees begin logging in."
+    },
+    {
+      name: "EC2 Spot Instances",
+      category: "Compute",
+      role: "Secures surplus AWS compute capacity at 70-90% discount."
+    },
+    {
+      name: "EC2 Mixed Instances Policy",
+      category: "Compute",
+      role: "Blends 20% on-demand instances with diverse Spot instance families (r6i, r6a, r5)."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "24/7 Provisioned On-Demand",
+      pros: ["Zero risk of spot interruption"],
+      cons: ["Extreme financial waste ($3,400/mo)"],
+      verdict: "Financially inefficient for internal tools."
+    },
+    {
+      name: "Mixed Fleet (20% On-Demand + 80% Spot) + Scheduled Scaling (Chosen)",
+      isChosen: true,
+      pros: ["72% cost savings", "Automatic warming before 8 AM", "Diversified spot pools prevent mass evictions"],
+      cons: ["Requires handling 2-minute spot termination notices"],
+      verdict: "Optimal balance of cost and reliability."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Scheduled Scaling Cron Expressions" badge="Configuration">
+
+```
+# Morning Scale-Up (Monday through Friday at 7:45 AM UTC)
+Recurrence: "45 7 * * 1-5"
+DesiredCapacity: 12, MinSize: 4, MaxSize: 20
+
+# Evening Scale-Down (Monday through Friday at 6:30 PM UTC)
+Recurrence: "30 18 * * 1-5"
+DesiredCapacity: 0, MinSize: 0, MaxSize: 2
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Monthly Compute Bill</strong>: Reduced from $3,450 to <strong>$965/month</strong>.</li>
+    <li><strong>User Experience</strong>: 0 complaints regarding morning startup lag.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>FinOps Rule:</strong> Any enterprise system with predictable human usage cycles (8am-6pm) should never run static full-capacity compute 24/7.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="internal-analytics-portal"
+    questions={[
+      {
+        question: "What notice period does AWS provide before reclaiming a Spot Instance?",
+        options: [
+          "30 seconds",
+          "2 minutes via EventBridge / Instance Metadata",
+          "15 minutes",
+          "1 hour"
+        ],
+        correctIndex: 1,
+        explanation: "AWS provides a 2-minute warning before reclaiming a Spot instance, allowing applications to gracefully finish requests or checkpoint state."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/schedule_time.html" target="_blank" rel="noopener">Scheduled Scaling for Amazon EC2 Auto Scaling</a></li>
+  </ul>
+</section>

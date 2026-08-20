@@ -1,0 +1,188 @@
+---
+moduleId: "00-foundations"
+title: "Free-Tier & Budget Trap Guard: Automated Cost Anomaly Defense"
+summary: "Prevent surprise cloud bills with multi-tier AWS Budgets, CloudWatch billing alarms, anomaly detection, and automated circuit breakers."
+difficulty: "Beginner"
+estimatedMinutes: 7
+industry: "FinOps & Cloud Governance"
+architectureStyle:
+  - "Cost Optimization"
+  - "FinOps"
+awsServices:
+  - name: "AWS Budgets"
+    category: "Management"
+    role: "Sends automated email and SNS alerts when actual or forecasted spend exceeds thresholds."
+  - name: "AWS Cost Anomaly Detection"
+    category: "Management"
+    role: "Uses machine learning to identify anomalous spikes in service usage."
+  - name: "Amazon CloudWatch Alarms"
+    category: "Observability"
+    role: "Monitors estimated billing metrics and triggers notification actions."
+  - name: "AWS Lambda"
+    category: "Compute"
+    role: "Automated circuit breaker that revokes developer keys or scales down dev compute on budget breach."
+keyMetrics:
+  - label: "Billing Surprises"
+    value: "0"
+    trend: "down"
+  - label: "Alert Latency"
+    value: "< 15 mins"
+    trend: "up"
+tags:
+  - "finops"
+  - "budgets"
+  - "free-tier"
+  - "cost-optimization"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Surprise Billing Incidents", value: "0", trend: "down" },
+  { label: "Detection Velocity", value: "< 15m", trend: "up" },
+  { label: "Monthly Savings Potential", value: "$1,200+", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    Junior engineers and growing startups frequently encounter surprise four-figure bills due to left-running NAT Gateways, unattached Elastic IPs, provisioned IOPS disks, or recursive Lambda invocation loops.
+  </p>
+  <p>
+    Standard AWS invoices are retroactive. Without proactive alerting, a runaway script over a holiday weekend can burn thousands of dollars before anyone notices.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Zero-Cost Alerting</strong>: Spend monitoring must not incur substantial infrastructure costs.</li>
+    <li><strong>Multi-Threshold Triggers</strong>: Alerts at 50%, 80%, 100%, and forecasted 120% of monthly budget.</li>
+    <li><strong>Automated Circuit Breaker</strong>: Option to automatically quarantine non-production resources if spend exceeds 150%.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="FinOps Billing Guard & Automated Remediation"
+    diagram={`graph LR
+    Spend[AWS Resource Usage & Billing Meter] --> Budgets[AWS Budgets & Cost Anomaly ML]
+    Budgets -->|Spend > 80%| SNS[Amazon SNS Topic]
+    SNS -->|Urgent Notification| Slack[DevOps Slack / Email Alert]
+    Budgets -->|Spend > 150% Hard Breach| Lambda[Cost Sentinel Lambda]
+    Lambda -->|Quarantine| ASG[Scale Down Non-Prod ASG to 0]
+    
+    style Budgets fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style SNS fill:#101728,stroke:#FB7185,stroke-width:1px,color:#fff
+    style Lambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Continuous Metering</strong>: AWS Cost Management continuously analyzes billing metrics.</li>
+    <li><strong>ML Anomaly Detection</strong>: Detects abnormal usage spikes even if overall monthly budget is not yet breached.</li>
+    <li><strong>Tiered Notifications</strong>: Tier 1 sends informational alerts; Tier 2 engages senior leads; Tier 3 executes automated containment.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS Budgets",
+      category: "Management",
+      role: "Provides free alerting for up to 20 budgets with both actual and forecasted spend models."
+    },
+    {
+      name: "AWS Cost Anomaly Detection",
+      category: "Management",
+      role: "Applies statistical ML to isolate root cause service, account, and region for unexpected charges."
+    },
+    {
+      name: "Amazon SNS",
+      category: "Serverless",
+      role: "Fans out billing notifications to email, PagerDuty, and webhooks."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Manual Month-End Invoice Review",
+      pros: ["Zero setup time"],
+      cons: ["Reactive", "Loss of thousands of dollars before discovery"],
+      verdict: "High financial risk."
+    },
+    {
+      name: "Automated AWS Budgets + Anomaly Alerts (Chosen)",
+      isChosen: true,
+      pros: ["Near real-time alerts", "Forecasted overrun warnings", "Zero maintenance"],
+      cons: ["Requires initial notification configuration"],
+      verdict: "Essential standard for all AWS accounts."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Top 3 Free Tier Cost Traps to Watch" badge="FinOps Audit">
+    <ul>
+      <li><strong>NAT Gateways</strong>: Hourly charge (~$0.045/hr ≈ $32/mo per AZ) + data processing fee ($0.045/GB). Use VPC Endpoints for S3/DynamoDB instead.</li>
+      <li><strong>Unattached Elastic IP Addresses</strong>: AWS charges for public IPv4 addresses that are provisioned but not associated with a running instance.</li>
+      <li><strong>EBS Volumes without EC2 Instances</strong>: Terminating an EC2 instance may leave EBS disks orphaned if "Delete on Termination" is disabled.</li>
+    </ul>
+  </DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>100% Prevention</strong> of accidental five-figure budget overruns.</li>
+    <li><strong>15-Minute MTTA</strong> (Mean Time to Alert) on anomalous data transfer or compute surges.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>FinOps Rule #1:</strong> Never launch experimental infrastructure without setting up an AWS Budget and a Billing Alarm in <code>us-east-1</code> on day one.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="free-tier-budget-guard"
+    questions={[
+      {
+        question: "In which AWS region are CloudWatch EstimatedCharges billing metrics published?",
+        options: [
+          "In the region where your EC2 instances run.",
+          "In us-east-1 (N. Virginia), where global billing data aggregates.",
+          "In all regions simultaneously.",
+          "In us-west-2 only."
+        ],
+        correctIndex: 1,
+        explanation: "Global billing metrics for CloudWatch are aggregated exclusively in us-east-1 (N. Virginia)."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" target="_blank" rel="noopener">AWS Budgets Documentation</a></li>
+    <li><a href="https://aws.amazon.com/aws-cost-management/aws-cost-anomaly-detection/" target="_blank" rel="noopener">AWS Cost Anomaly Detection Guide</a></li>
+  </ul>
+</section>

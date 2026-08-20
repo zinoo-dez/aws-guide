@@ -1,0 +1,191 @@
+---
+moduleId: "06-data-analytics"
+title: "Real-Time Clickstream Analytics: Ingesting 20,000 Events/Sec into S3 & Athena"
+summary: "Streaming massive client telemetry with Amazon Kinesis Data Firehose, automated Parquet conversion, Glue Catalog schema evolution, and serverless Athena SQL."
+difficulty: "Advanced"
+estimatedMinutes: 9
+industry: "E-Commerce & Digital Media"
+architectureStyle:
+  - "Serverless Lakehouse"
+  - "Streaming ETL"
+awsServices:
+  - name: "Amazon Kinesis Data Firehose"
+    category: "Analytics"
+    role: "Buffers streaming events and converts JSON payloads to columnar Apache Parquet format."
+  - name: "Amazon S3 Lakehouse"
+    category: "Storage"
+    role: "Partitioned object lake storing raw and processed analytics data."
+  - name: "AWS Glue Data Catalog"
+    category: "Analytics"
+    role: "Maintains centralized metastore and manages schema evolution."
+  - name: "Amazon Athena"
+    category: "Analytics"
+    role: "Executes ad-hoc distributed serverless Presto/Trino SQL queries directly on S3 Parquet partitions."
+keyMetrics:
+  - label: "Ingestion Throughput"
+    value: "20,000 / sec"
+    trend: "up"
+  - label: "Query Cost Reduction"
+    value: "92%"
+    trend: "down"
+  - label: "End-to-End Latency"
+    value: "< 60s"
+    trend: "down"
+tags:
+  - "kinesis"
+  - "athena"
+  - "glue"
+  - "parquet"
+  - "data-lake"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Ingestion Throughput", value: "20k events/s", trend: "up" },
+  { label: "Athena S3 Scan Cost", value: "-92%", trend: "down" },
+  { label: "Lakehouse Ingestion Lag", value: "60 seconds", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An online streaming portal generates 20,000 user clickstream events every second (page views, video scrubs, clicks). Storing raw JSON files directly on S3 resulted in millions of tiny 2KB files. Running a query across 1 day of data required scanning 1.7 Billion files, costing thousands of dollars per query and timing out Athena.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Near Real-Time Availability</strong>: Telemetry must be queryable via SQL within 60 seconds of emission.</li>
+    <li><strong>Optimized Storage Format</strong>: Convert unstructured JSON to compressed columnar Apache Parquet.</li>
+    <li><strong>Partition Pruning</strong>: Enable queries to scan only targeted date partitions (<code>year=YYYY/month=MM/day=DD/hour=HH</code>).</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Real-Time Streaming Lakehouse Pipeline"
+    diagram={`graph LR
+    Client([Web / Mobile App SDK]) -->|HTTPS Event Stream| Firehose[Kinesis Data Firehose]
+    
+    Glue[AWS Glue Data Catalog] -.->|Schema Reference| Firehose
+    
+    Firehose -->|1. Buffer 128MB or 60s| Buffer[Memory Buffer]
+    Buffer -->|2. Convert JSON to Snappy Parquet| Converter[Inline Format Converter]
+    Converter -->|3. Partitioned Dynamic S3 Prefix| S3[(S3 Analytics Lakehouse)]
+    
+    Athena[Amazon Athena SQL] -->|Serverless Query: Partition Pruned| S3
+    Athena --> QuickSight[Amazon QuickSight Dashboards]
+
+    style Firehose fill:#18223B,stroke:#E879F9,stroke-width:2px,color:#fff
+    style S3 fill:#101728,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Athena fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon Kinesis Data Firehose",
+      category: "Analytics",
+      role: "Performs automated buffer aggregation and inline JSON-to-Parquet conversion without provisioning ETL servers."
+    },
+    {
+      name: "Amazon Athena",
+      category: "Analytics",
+      role: "Serverless SQL engine charging $5.00 per Terabyte scanned. Parquet reduces scanned bytes by ~90%."
+    },
+    {
+      name: "AWS Glue Data Catalog",
+      category: "Analytics",
+      role: "Centralized Hive-compatible schema catalog shared between Athena, EMR, and Redshift."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Raw JSON Files in S3",
+      pros: ["Zero transformation latency"],
+      cons: ["Scans 100% of data (all columns)", "Millions of small file I/O penalties", "Athena query bills skyrocket"],
+      verdict: "Severe financial anti-pattern."
+    },
+    {
+      name: "Firehose Snappy Parquet + Partitioning (Chosen)",
+      isChosen: true,
+      pros: ["90%+ storage compression", "Columnar projection scans only requested fields", "Instant partition pruning"],
+      cons: ["60-second micro-batch latency"],
+      verdict: "Optimal architecture for high-volume analytics."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Dynamic S3 Prefix Partitioning in Firehose" badge="Configuration">
+
+```
+# Dynamic Partitioning S3 Prefix Expression:
+events/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
+
+# Error Output Prefix:
+errors/!{firehose:error-output-type}/!{timestamp:yyyy}/!{timestamp:MM}/
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Query Scan Volume</strong>: Reduced from 1.2 TB per analytical query to <strong>98 GB</strong>.</li>
+    <li><strong>Query Cost</strong>: Dropped from $6.00/query to <strong>$0.49/query</strong>.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Data Lake Law:</strong> Athena charges purely based on the number of bytes scanned from S3. Using <strong>Apache Parquet + Date Partitioning</strong> is the single most effective way to cut big data query costs by 90%.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="realtime-clickstream-analytics"
+    questions={[
+      {
+        question: "Why does columnar storage like Apache Parquet drastically reduce Athena query costs?",
+        options: [
+          "Because Athena only charges for relational databases.",
+          "Because Athena only reads the specific columns referenced in the SQL SELECT and WHERE clauses, skipping all other columns entirely.",
+          "Because Parquet files are stored in memory.",
+          "Because Glue Catalog executes the query instead of Athena."
+        ],
+        correctIndex: 1,
+        explanation: "Columnar formats organize data by column rather than row. A query like `SELECT user_id, action FROM table` only reads the bytes for those two columns, ignoring the rest of the payload."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html" target="_blank" rel="noopener">Kinesis Firehose Record Format Conversion</a></li>
+  </ul>
+</section>

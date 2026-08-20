@@ -1,0 +1,685 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Badge from '../components/ui/Badge.astro';
+import CaseStudyCard from '../components/case-study/CaseStudyCard.astro';
+import { getCollection } from 'astro:content';
+
+const modules = await getCollection('modules');
+const sortedModules = [...modules].sort((a, b) => a.data.moduleNumber - b.data.moduleNumber);
+
+const caseStudies = await getCollection('caseStudies');
+const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0, 6);
+---
+
+<BaseLayout 
+  title="AWS Architecture Guild | Real-World System Design Case Studies"
+  description="Master AWS cloud system design through 11 modules and 29+ real-world production case studies, interactive Mermaid architecture diagrams, trade-off matrices, and retention quizzes."
+>
+  <!-- Ambient background lighting -->
+  <div class="ambient-orb ambient-orb-orange" style="top: 10%; left: 15%; width: 500px; height: 500px;"></div>
+  <div class="ambient-orb ambient-orb-blue" style="top: 30%; right: 10%; width: 450px; height: 450px;"></div>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-inner">
+      <div class="hero-badge animate-fade-in">
+        <span class="badge-dot"></span>
+        <span>Problem-First AWS System Design Academy</span>
+      </div>
+
+      <h1 class="hero-title animate-fade-in">
+        Stop Memorizing AWS Docs.<br />
+        <span class="gradient-text">Architect Real-World Systems.</span>
+      </h1>
+
+      <p class="hero-subtitle animate-fade-in">
+        Official cloud docs list thousands of APIs without explaining <em>why</em> or <em>when</em> to use them. 
+        We teach AWS through <strong>real business problems</strong>, <strong>interactive architecture diagrams</strong>, <strong>trade-off matrices</strong>, and <strong>production-grade cost/SLA metrics</strong>.
+      </p>
+
+      <div class="hero-cta-group animate-fade-in">
+        <a href="/roadmap" class="btn btn-primary btn-lg">
+          <span>Explore Learning Roadmap</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </a>
+        <a href="/case-studies" class="btn btn-secondary btn-lg">
+          <span>Browse 29+ Case Studies</span>
+        </a>
+      </div>
+
+      <!-- Live Stats Strip -->
+      <div class="hero-stats-banner glass-card animate-fade-in">
+        <div class="stat-box">
+          <span class="stat-number">11</span>
+          <span class="stat-label">Core Modules</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-box">
+          <span class="stat-number">29+</span>
+          <span class="stat-label">Production Case Studies</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-box">
+          <span class="stat-number">45+</span>
+          <span class="stat-label">Interactive Topologies</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-box">
+          <span class="stat-number">100%</span>
+          <span class="stat-label">Free & Open Access</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Learning Tracks -->
+  <section class="tracks-section">
+    <div class="container">
+      <div class="section-header-center">
+        <span class="section-kicker">Curated Career Paths</span>
+        <h2 class="section-title">Select Your Architecture Track</h2>
+        <p class="section-subtitle">Follow targeted learning tracks tailored for your engineering role</p>
+      </div>
+
+      <div class="tracks-grid">
+        <div class="track-card glass-card">
+          <div class="track-icon-box track-icon-orange">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+          </div>
+          <h3 class="track-name">Serverless Architect Track</h3>
+          <p class="track-desc">Master event-driven microservices, Lambda concurrency, DynamoDB single-table design, and API Gateway proxies.</p>
+          <div class="track-modules-list">
+            <span class="track-badge">Module 1</span>
+            <span class="track-badge">Module 3</span>
+            <span class="track-badge">Module 4</span>
+            <span class="track-badge">Module 10</span>
+          </div>
+          <a href="/modules/03-serverless-apps" class="track-link">Start Serverless Track →</a>
+        </div>
+
+        <div class="track-card glass-card">
+          <div class="track-icon-box track-icon-cyan">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+          </div>
+          <h3 class="track-name">DevOps & Cloud SRE Track</h3>
+          <p class="track-desc">Automate zero-downtime GitOps pipelines, blue/green traffic shifting, VPC isolation, and self-healing telemetry.</p>
+          <div class="track-modules-list">
+            <span class="track-badge">Module 2</span>
+            <span class="track-badge">Module 5</span>
+            <span class="track-badge">Module 8</span>
+            <span class="track-badge">Module 9</span>
+          </div>
+          <a href="/modules/08-devops-iac" class="track-link">Start DevOps Track →</a>
+        </div>
+
+        <div class="track-card glass-card">
+          <div class="track-icon-box track-icon-purple">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+          </div>
+          <h3 class="track-name">Data & Analytics Engineer Track</h3>
+          <p class="track-desc">Build real-time Kinesis stream pipelines, S3 Lakehouse partitioning with Glue & Athena, and Redshift datamarts.</p>
+          <div class="track-modules-list">
+            <span class="track-badge">Module 0</span>
+            <span class="track-badge">Module 4</span>
+            <span class="track-badge">Module 6</span>
+            <span class="track-badge">Module 10</span>
+          </div>
+          <a href="/modules/06-data-analytics" class="track-link">Start Data Track →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Complete Curriculum Grid -->
+  <section class="curriculum-section">
+    <div class="container">
+      <div class="section-header-row">
+        <div>
+          <span class="section-kicker">Comprehensive Curriculum</span>
+          <h2 class="section-title">All 11 Learning Modules</h2>
+        </div>
+        <a href="/roadmap" class="btn btn-secondary">
+          <span>View Interactive Roadmap</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
+      </div>
+
+      <div class="modules-grid">
+        {sortedModules.map((mod) => {
+          const modCases = caseStudies.filter(c => c.data.moduleId === mod.id);
+          return (
+            <div class="module-card glass-card">
+              <div class="module-card-top">
+                <span class="module-pill">Module {mod.data.moduleNumber}</span>
+                <Badge variant="difficulty" type={mod.data.difficulty} size="sm" />
+                <span class="module-hours">{mod.data.estimatedHours}h</span>
+              </div>
+
+              <h3 class="module-card-title">
+                <a href={`/modules/${mod.id}`}>{mod.data.title}</a>
+              </h3>
+              <p class="module-card-desc">{mod.data.description}</p>
+
+              <div class="module-services-row">
+                {mod.data.keyServices.slice(0, 3).map(svc => (
+                  <span class="mini-service-pill">{svc}</span>
+                ))}
+                {mod.data.keyServices.length > 3 && (
+                  <span class="mini-service-more">+{mod.data.keyServices.length - 3}</span>
+                )}
+              </div>
+
+              <div class="module-card-footer">
+                <span class="case-count">{modCases.length} Case Studies</span>
+                <a href={`/modules/${mod.id}`} class="explore-module-link">
+                  <span>Start Module</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Real-World Case Studies -->
+  <section class="featured-section">
+    <div class="container">
+      <div class="section-header-row">
+        <div>
+          <span class="section-kicker">Production Highlights</span>
+          <h2 class="section-title">Featured Enterprise Case Studies</h2>
+        </div>
+        <a href="/case-studies" class="btn btn-secondary">
+          <span>View All 29+ Studies</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
+      </div>
+
+      <div class="case-studies-grid">
+        {featuredCaseStudies.map((cs) => (
+          <CaseStudyCard 
+            slug={cs.id}
+            title={cs.data.title}
+            summary={cs.data.summary}
+            difficulty={cs.data.difficulty}
+            estimatedMinutes={cs.data.estimatedMinutes}
+            awsServices={cs.data.awsServices}
+            keyMetrics={cs.data.keyMetrics}
+            industry={cs.data.industry}
+            tags={cs.data.tags}
+            featured={cs.data.featured}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Well-Architected Framework CTA -->
+  <section class="waf-banner-section">
+    <div class="container">
+      <div class="waf-banner glass-card glow-aws-pulse">
+        <div class="waf-banner-content">
+          <span class="waf-pill">The 6 Pillars Alignment</span>
+          <h2>Ground Your Cloud Decisions in First Principles</h2>
+          <p>
+            Every case study in the AWS Guild is evaluated against the 6 pillars of the AWS Well-Architected Framework: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, and Sustainability.
+          </p>
+          <div class="waf-actions">
+            <a href="/about" class="btn btn-primary">Read Architecture Methodology</a>
+            <a href="/roadmap" class="btn btn-secondary">View Visual Roadmap</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Hero */
+  .hero-section {
+    position: relative;
+    padding: var(--space-16) 0 var(--space-12);
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 10;
+    max-width: 920px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.95rem;
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-6);
+  }
+
+  .badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--aws-orange);
+    box-shadow: 0 0 8px var(--aws-orange);
+  }
+
+  .hero-title {
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 800;
+    color: var(--text-display);
+    line-height: 1.15;
+    margin-bottom: var(--space-6);
+    letter-spacing: -0.03em;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #FF9900 0%, #FFA726 40%, #38BDF8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: var(--space-8);
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-12);
+    flex-wrap: wrap;
+  }
+
+  .btn-lg {
+    padding: 0.85rem 1.75rem;
+    font-size: 1rem;
+  }
+
+  .hero-stats-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: var(--space-6) var(--space-8);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-xl);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-number {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-display);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border-subtle);
+  }
+
+  /* Section Header Standards */
+  .section-kicker {
+    display: block;
+    font-size: 0.775rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--aws-orange);
+    margin-bottom: var(--space-2);
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: var(--text-display);
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+
+  .section-header-center {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--space-10);
+  }
+
+  .section-header-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: var(--space-8);
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  /* Career Tracks */
+  .tracks-section {
+    padding: var(--space-12) 0;
+  }
+
+  .tracks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-6);
+  }
+
+  .track-card {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+  }
+
+  .track-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+  }
+
+  .track-icon-orange { background: var(--aws-orange-bg); color: var(--aws-orange); border: 1px solid var(--aws-orange-border); }
+  .track-icon-cyan { background: var(--cat-database-bg); color: var(--cat-database); border: 1px solid var(--cat-database-border); }
+  .track-icon-purple { background: var(--cat-analytics-bg); color: var(--cat-analytics); border: 1px solid var(--cat-analytics-border); }
+
+  .track-name {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .track-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    flex: 1;
+    margin-bottom: var(--space-4);
+  }
+
+  .track-modules-list {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+
+  .track-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    background: var(--bg-surface-3);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+  }
+
+  .track-link {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--aws-orange);
+    margin-top: auto;
+  }
+
+  /* Curriculum Grid */
+  .curriculum-section {
+    padding: var(--space-12) 0;
+  }
+
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-6);
+  }
+
+  .module-card {
+    padding: var(--space-5);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .module-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--aws-orange-border);
+  }
+
+  .module-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+  }
+
+  .module-pill {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-full);
+  }
+
+  .module-hours {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .module-card-title {
+    font-size: 1.15rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .module-card-title a {
+    color: var(--text-primary);
+  }
+
+  .module-card-title a:hover {
+    color: var(--aws-orange);
+  }
+
+  .module-card-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--space-4);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .module-services-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+
+  .mini-service-pill {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    padding: 0.15rem 0.45rem;
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+  }
+
+  .mini-service-more {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .module-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .case-count {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+  }
+
+  .explore-module-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.825rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--aws-orange);
+  }
+
+  /* Featured Case Studies */
+  .featured-section {
+    padding: var(--space-12) 0;
+  }
+
+  .case-studies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: var(--space-6);
+  }
+
+  /* WAF Banner */
+  .waf-banner-section {
+    padding: var(--space-12) 0 var(--space-16);
+  }
+
+  .waf-banner {
+    padding: var(--space-10) var(--space-8);
+    background: linear-gradient(135deg, rgba(16, 23, 40, 0.95) 0%, rgba(24, 34, 59, 0.85) 100%);
+    border: 1px solid var(--aws-orange-border);
+    border-radius: var(--radius-xl);
+    text-align: center;
+  }
+
+  .waf-banner-content {
+    max-width: 740px;
+    margin: 0 auto;
+  }
+
+  .waf-pill {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-4);
+  }
+
+  .waf-banner h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+    color: var(--text-display);
+    margin-bottom: var(--space-4);
+  }
+
+  .waf-banner p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-6);
+  }
+
+  .waf-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 640px) {
+    .hero-section {
+      padding: var(--space-10) 0 var(--space-6);
+    }
+    .stat-divider {
+      display: none;
+    }
+    .hero-stats-banner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: var(--space-4);
+      gap: var(--space-4);
+    }
+    .hero-cta-group {
+      flex-direction: column;
+      width: 100%;
+    }
+    .hero-cta-group .btn {
+      width: 100%;
+    }
+    .modules-grid {
+      grid-template-columns: 1fr;
+    }
+    .case-studies-grid {
+      grid-template-columns: 1fr;
+    }
+    .tracks-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-stats-banner {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,171 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout 
+  title="About & Architecture Methodology | AWS Architecture Guild"
+  description="The problem-first architectural philosophy, Well-Architected Framework 6-pillar alignment, and mission of the AWS Architecture Guild."
+>
+  <div class="about-page container container-narrow">
+    <header class="about-header">
+      <span class="section-kicker">Philosophy & Methodology</span>
+      <h1 class="about-title">Why the AWS Architecture Guild Exists</h1>
+      <p class="about-subtitle">
+        Bridging the gap between raw AWS API documentation and real-world enterprise system design.
+      </p>
+    </header>
+
+    <div class="about-content markdown-body glass-card">
+      <h2>The Problem with Modern Cloud Learning</h2>
+      <p>
+        Official cloud documentation and certification exams frequently focus on rote memorization: memorizing individual CLI flags, instance type naming conventions, and service feature matrices.
+      </p>
+      <p>
+        However, in production engineering, <strong>systems fail at the boundaries between services</strong>. Senior architects do not ask <em>"What does SQS do?"</em>—they ask:
+      </p>
+      <ul>
+        <li><em>"How do we prevent downstream Lambda database connection starvation during a 50,000 req/sec webhook spike?"</em></li>
+        <li><em>"How do we achieve zero-RPO data durability across oceans without exceeding a $1,000/month budget ceiling?"</em></li>
+        <li><em>"When does the operational complexity of Amazon EKS outweigh the simplicity of AWS Fargate?"</em></li>
+      </ul>
+
+      <hr />
+
+      <h2>The 6 Pillars of the AWS Well-Architected Framework</h2>
+      <p>Every case study in this repository is authored and reviewed against the 6 pillars:</p>
+
+      <div class="pillars-grid">
+        <div class="pillar-card">
+          <strong class="pillar-name color-orange">1. Operational Excellence</strong>
+          <p>Running and monitoring systems, automated CI/CD pipelines, and continuous self-healing evolution.</p>
+        </div>
+        <div class="pillar-card">
+          <strong class="pillar-name color-amber">2. Security & Zero-Trust</strong>
+          <p>Protecting data, IAM least privilege, VPC network tiering, and KMS envelope encryption.</p>
+        </div>
+        <div class="pillar-card">
+          <strong class="pillar-name color-blue">3. Reliability & Resiliency</strong>
+          <p>Recovering automatically from hardware/AZ failures and mitigating distributed disruptions.</p>
+        </div>
+        <div class="pillar-card">
+          <strong class="pillar-name color-emerald">4. Performance Efficiency</strong>
+          <p>Using computing resources efficiently (Graviton ARM, caching, serverless event parallelism).</p>
+        </div>
+        <div class="pillar-card">
+          <strong class="pillar-name color-purple">5. Cost Optimization</strong>
+          <p>Eliminating unallocated spend (FinOps), right-sizing, and choosing pay-per-execution models.</p>
+        </div>
+        <div class="pillar-card">
+          <strong class="pillar-name color-cyan">6. Sustainability</strong>
+          <p>Minimizing environmental impacts through shared serverless capacity and efficient compute.</p>
+        </div>
+      </div>
+
+      <hr />
+
+      <h2>The 11-Part Case Study Anatomy</h2>
+      <p>
+        To ensure maximum retention and consistency, every single case study follows our rigorous 11-part anatomy:
+      </p>
+      <ol>
+        <li><strong>Metadata & Reading Time</strong></li>
+        <li><strong>Business Problem & Context</strong></li>
+        <li><strong>Requirements & Quantitative Constraints</strong></li>
+        <li><strong>Interactive Architecture Canvas (Mermaid.js)</strong></li>
+        <li><strong>AWS Services Rationale ("Why this service?")</strong></li>
+        <li><strong>Design Decisions & Trade-Off Matrix</strong></li>
+        <li><strong>Implementation Highlights & IaC Recipes</strong></li>
+        <li><strong>Results, Quantitative Benchmarks & Cost ROI</strong></li>
+        <li><strong>Key Architectural Takeaways & Anti-Patterns</strong></li>
+        <li><strong>Interactive Knowledge Retention Check Quiz</strong></li>
+        <li><strong>Official AWS Reference Links</strong></li>
+      </ol>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .about-page {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-16);
+  }
+
+  .about-header {
+    text-align: center;
+    margin-bottom: var(--space-10);
+  }
+
+  .about-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+  }
+
+  .about-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .about-content {
+    padding: var(--space-8);
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-xl);
+  }
+
+  .about-content h2 {
+    font-size: 1.4rem;
+    color: var(--text-display);
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+
+  .about-content p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-4);
+  }
+
+  .about-content hr {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: var(--space-8) 0;
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+    margin: var(--space-6) 0;
+  }
+
+  .pillar-card {
+    padding: var(--space-4);
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .pillar-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .pillar-card p {
+    font-size: 0.825rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .color-orange { color: #FF9900; }
+  .color-amber { color: #F59E0B; }
+  .color-blue { color: #38BDF8; }
+  .color-emerald { color: #10B981; }
+  .color-purple { color: #A78BFA; }
+  .color-cyan { color: #06B6D4; }
+</style>

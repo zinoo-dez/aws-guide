@@ -1,0 +1,255 @@
+---
+interface Props {
+  diagram: string;
+  title?: string;
+  caption?: string;
+}
+
+const { diagram, title = 'Architecture Topology', caption = 'Interactive Architecture Diagram (Use controls to zoom & pan)' } = Astro.props;
+---
+
+<div class="architecture-diagram-card glass-card">
+  <div class="diagram-toolbar">
+    <div class="diagram-title-group">
+      <svg class="diagram-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+      </svg>
+      <span class="diagram-title">{title}</span>
+    </div>
+    
+    <div class="diagram-actions">
+      <button type="button" class="diagram-btn zoom-in-btn" title="Zoom In" aria-label="Zoom In">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <button type="button" class="diagram-btn zoom-out-btn" title="Zoom Out" aria-label="Zoom Out">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <button type="button" class="diagram-btn zoom-reset-btn" title="Reset View" aria-label="Reset View">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+      </button>
+      <button type="button" class="diagram-btn copy-mermaid-btn" title="Copy Mermaid Definition" aria-label="Copy Mermaid Definition">
+        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span class="btn-text">Copy</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Diagram Canvas Area -->
+  <div class="diagram-viewport">
+    <div class="mermaid-target mermaid" data-raw={diagram}>
+      {diagram}
+    </div>
+  </div>
+
+  {caption && <p class="diagram-caption">{caption}</p>}
+</div>
+
+<style>
+  .architecture-diagram-card {
+    margin: var(--space-6) 0;
+    overflow: hidden;
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .diagram-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface-2);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .diagram-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .diagram-icon {
+    color: var(--aws-orange);
+  }
+
+  .diagram-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+
+  .diagram-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .diagram-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--bg-surface-3);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.775rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .diagram-btn:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+
+  .diagram-viewport {
+    position: relative;
+    min-height: 280px;
+    padding: var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    background: var(--bg-surface-2);
+    cursor: grab;
+  }
+
+  .diagram-viewport:active {
+    cursor: grabbing;
+  }
+
+  .mermaid-target {
+    transition: transform 0.15s ease-out;
+    transform-origin: center center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  :global(.mermaid svg) {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .diagram-caption {
+    padding: var(--space-2) var(--space-4);
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    background: var(--bg-surface-2);
+    border-top: 1px solid var(--border-subtle);
+    text-align: center;
+    margin: 0;
+  }
+</style>
+
+<script>
+  async function initMermaid() {
+    if (typeof window === 'undefined') return;
+
+    if (!(window as any).mermaid) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
+      script.onload = () => {
+        setupMermaidInstances();
+      };
+      document.head.appendChild(script);
+    } else {
+      setupMermaidInstances();
+    }
+  }
+
+  function setupMermaidInstances() {
+    const mermaid = (window as any).mermaid;
+    if (!mermaid) return;
+
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isLight ? 'default' : 'dark',
+      themeVariables: {
+        fontFamily: 'Inter, system-ui, sans-serif',
+        primaryColor: isLight ? '#FFFBEB' : '#18223B',
+        primaryTextColor: isLight ? '#0F172A' : '#F1F5F9',
+        primaryBorderColor: isLight ? '#EA580C' : '#FF9900',
+        lineColor: isLight ? '#0284C7' : '#38BDF8',
+        secondaryColor: isLight ? '#F8FAFC' : '#101728',
+        tertiaryColor: isLight ? '#FFFFFF' : '#0B101C',
+        background: 'transparent',
+        nodeTextColor: isLight ? '#0F172A' : '#F1F5F9',
+        mainBkg: isLight ? '#FFFFFF' : '#18223B',
+        nodeBorder: isLight ? '#CBD5E1' : '#38BDF8',
+        clusterBkg: isLight ? '#F8FAFC' : '#0B101C',
+        clusterBorder: isLight ? '#E2E8F0' : '#1E2A4A',
+        edgeLabelBackground: isLight ? '#FFFFFF' : '#101728',
+      },
+      securityLevel: 'loose',
+    });
+
+    document.querySelectorAll('.mermaid-target').forEach(async (el) => {
+      const raw = el.getAttribute('data-raw');
+      if (raw) {
+        el.removeAttribute('data-rendered');
+        const id = 'mermaid-' + Math.random().toString(36).substring(2, 9);
+        try {
+          const { svg } = await mermaid.render(id, raw);
+          el.innerHTML = svg;
+          el.setAttribute('data-rendered', 'true');
+        } catch (err) {
+          console.error('Mermaid render error:', err);
+        }
+      }
+    });
+
+    // Setup interactive zoom / pan on each diagram
+    document.querySelectorAll('.architecture-diagram-card').forEach((card) => {
+      const target = card.querySelector('.mermaid-target') as HTMLElement;
+      if (!target) return;
+
+      let zoom = 1;
+      const zoomInBtn = card.querySelector('.zoom-in-btn');
+      const zoomOutBtn = card.querySelector('.zoom-out-btn');
+      const resetBtn = card.querySelector('.zoom-reset-btn');
+      const copyBtn = card.querySelector('.copy-mermaid-btn');
+
+      zoomInBtn?.addEventListener('click', () => {
+        zoom = Math.min(zoom + 0.2, 2.5);
+        target.style.transform = `scale(${zoom})`;
+      });
+
+      zoomOutBtn?.addEventListener('click', () => {
+        zoom = Math.max(zoom - 0.2, 0.5);
+        target.style.transform = `scale(${zoom})`;
+      });
+
+      resetBtn?.addEventListener('click', () => {
+        zoom = 1;
+        target.style.transform = `scale(1)`;
+      });
+
+      copyBtn?.addEventListener('click', () => {
+        const raw = target.getAttribute('data-raw') || '';
+        navigator.clipboard.writeText(raw).then(() => {
+          const textSpan = copyBtn.querySelector('.btn-text');
+          if (textSpan) {
+            textSpan.textContent = 'Copied!';
+            setTimeout(() => { textSpan.textContent = 'Copy'; }, 2000);
+          }
+        });
+      });
+    });
+  }
+
+  initMermaid();
+  document.addEventListener('astro:page-load', initMermaid);
+  window.addEventListener('theme-changed', () => {
+    setupMermaidInstances();
+  });
+</script>

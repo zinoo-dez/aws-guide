@@ -1,0 +1,187 @@
+---
+moduleId: "06-data-analytics"
+title: "Executive BI Datamart Pipeline: Redshift Serverless & Glue ETL"
+summary: "Automating dimensional data warehouse transforms from transactional OLTP databases into Redshift Serverless and Amazon QuickSight."
+difficulty: "Intermediate"
+estimatedMinutes: 8
+industry: "Business Intelligence & Retail"
+architectureStyle:
+  - "Data Warehousing"
+  - "Batch ETL"
+awsServices:
+  - name: "Amazon Redshift Serverless"
+    category: "Analytics"
+    role: "Provides petabyte-scale columnar SQL querying that automatically scales compute (RPUs) up and down."
+  - name: "AWS Glue"
+    category: "Analytics"
+    role: "Serverless Apache Spark ETL jobs extracting, transforming, and loading dimensional models."
+  - name: "Amazon QuickSight"
+    category: "Analytics"
+    role: "Cloud-native business intelligence visualization with SPICE in-memory engine."
+keyMetrics:
+  - label: "ETL Batch Duration"
+    value: "14 mins (from 3 hrs)"
+    trend: "down"
+  - label: "Dashboard Load Time"
+    value: "1.2s"
+    trend: "down"
+  - label: "Idle DW Billing"
+    value: "$0.00"
+    trend: "down"
+tags:
+  - "redshift"
+  - "glue"
+  - "quicksight"
+  - "bi"
+featured: false
+order: 3
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Nightly ETL Duration", value: "14 mins", trend: "down" },
+  { label: "Executive Dashboard Speed", value: "1.2s", trend: "down" },
+  { label: "Warehouse Idle Cost", value: "$0.00", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An international retail brand ran complex analytical SQL queries directly against their production PostgreSQL databases. Nightly sales report generation locked production tables, causing order checkout slowdowns. Furthermore, queries scanning multi-year sales trends took 45 minutes to execute in standard databases.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Zero Impact on Production OLTP</strong>: Analytical queries must never query production transactional databases.</li>
+    <li><strong>Sub-2s Executive Dashboards</strong>: C-level dashboards in Amazon QuickSight must load in under 2 seconds.</li>
+    <li><strong>Serverless Cost Model</strong>: Automatically shut down warehouse compute when no queries are running.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Executive BI Data Warehouse Architecture"
+    diagram={`graph LR
+    RDS[(Production Aurora Database)] -->|Nightly Export| S3Staging[(S3 Staging Lake)]
+    S3Staging --> GlueSpark[AWS Glue Spark ETL Job]
+    GlueSpark -->|Load Star Schema: Fact & Dims| Redshift[(Amazon Redshift Serverless)]
+    
+    Redshift -->|Direct Query / SPICE Ingest| QS[Amazon QuickSight]
+    QS --> Execs([Executive BI Dashboards])
+
+    style Redshift fill:#18223B,stroke:#E879F9,stroke-width:2px,color:#fff
+    style GlueSpark fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style QS fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon Redshift Serverless",
+      category: "Analytics",
+      role: "Columnar data warehouse that scales Redshift Processing Units (RPUs) dynamically and pauses when idle."
+    },
+    {
+      name: "AWS Glue (Apache Spark)",
+      category: "Analytics",
+      role: "Transforms raw normalized transactional tables into a star schema (Fact Sales, Dim Customers, Dim Stores)."
+    },
+    {
+      name: "Amazon QuickSight",
+      category: "Analytics",
+      role: "Provides paginated executive reports and ML-powered automated anomaly insights."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Dedicated Provisioned Redshift Cluster (dc2.8xlarge)",
+      pros: ["Fixed monthly predictable cost"],
+      cons: ["Billed 24/7 even when idle ($3,500/mo)", "Manual resizing requires cluster downtime"],
+      verdict: "Costly for sporadic reporting."
+    },
+    {
+      name: "Redshift Serverless (Chosen)",
+      isChosen: true,
+      pros: ["Charges only for query runtime seconds", "Automatically handles complex aggregations", "$0.00 spend at night"],
+      cons: ["Requires base RPU and max RPU ceiling limits"],
+      verdict: "Superior architecture for modern BI reporting."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Star Schema Table Design with Distribution Keys" badge="Redshift DDL">
+
+```
+CREATE TABLE fact_sales (
+    sale_id BIGINT IDENTITY(1,1),
+    customer_id INT NOT NULL,
+    store_id INT NOT NULL,
+    sale_timestamp TIMESTAMP NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL
+)
+DISTKEY(customer_id)
+SORTKEY(sale_timestamp);
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Report Query Performance</strong>: Dropped from 45 minutes to <strong>1.4 seconds</strong>.</li>
+    <li><strong>Production DB Health</strong>: 0% CPU impact on transactional checkout systems.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>OLTP vs OLAP Rule:</strong> Never run heavy aggregate business intelligence queries against production transactional databases. Always ETL into a dedicated columnar warehouse like Redshift Serverless.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="executive-bi-dashboard"
+    questions={[
+      {
+        question: "Why are columnar data warehouses like Redshift vastly faster for BI aggregates (e.g. SUM, AVG) than row-oriented databases like PostgreSQL?",
+        options: [
+          "Because Redshift uses JavaScript.",
+          "Because columnar storage reads only the numeric column being summed across all rows, avoiding loading unreferenced row data from disk.",
+          "Because Redshift requires no indexes.",
+          "Because QuickSight caches the entire database."
+        ],
+        correctIndex: 1,
+        explanation: "In row stores, the entire row (all columns) must be read from disk into memory. Columnar stores read only the targeted measurement column, cutting disk I/O by orders of magnitude."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/redshift/latest/mgmt/serverless-workgroup.html" target="_blank" rel="noopener">Amazon Redshift Serverless Documentation</a></li>
+  </ul>
+</section>

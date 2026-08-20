@@ -1,0 +1,114 @@
+---
+import { getCollection, render } from 'astro:content';
+import ModuleLayout from '../../layouts/ModuleLayout.astro';
+import CaseStudyCard from '../../components/case-study/CaseStudyCard.astro';
+
+export async function getStaticPaths() {
+  const modules = await getCollection('modules');
+  return modules.map((mod) => ({
+    params: { module: mod.id },
+    props: { mod },
+  }));
+}
+
+const { mod } = Astro.props;
+const { Content } = await render(mod);
+
+const allModules = await getCollection('modules');
+const allCaseStudies = await getCollection('caseStudies');
+const moduleCases = allCaseStudies.filter((c) => c.data.moduleId === mod.id);
+
+const moduleInfoList = allModules.map((m) => ({
+  id: m.id,
+  moduleNumber: m.data.moduleNumber,
+  title: m.data.title,
+  theme: m.data.theme,
+}));
+
+const caseInfoList = allCaseStudies.map((c) => ({
+  slug: c.id,
+  title: c.data.title,
+  moduleId: c.data.moduleId,
+  difficulty: c.data.difficulty,
+  estimatedMinutes: c.data.estimatedMinutes,
+}));
+---
+
+<ModuleLayout
+  moduleNumber={mod.data.moduleNumber}
+  title={mod.data.title}
+  tagline={mod.data.tagline}
+  theme={mod.data.theme}
+  difficulty={mod.data.difficulty}
+  estimatedHours={mod.data.estimatedHours}
+  keyServices={mod.data.keyServices}
+  allModules={moduleInfoList}
+  allCaseStudies={caseInfoList}
+>
+  <!-- Rendered Module Markdown -->
+  <Content />
+
+  <!-- Associated Case Studies Section -->
+  <section class="module-cases-section">
+    <div class="section-title-row">
+      <h2>Hands-On Case Studies in Module {mod.data.moduleNumber}</h2>
+      <span class="cases-count-badge">{moduleCases.length} Studies</span>
+    </div>
+
+    <div class="module-cases-grid">
+      {moduleCases.map((cs) => (
+        <CaseStudyCard 
+          slug={cs.id}
+          title={cs.data.title}
+          summary={cs.data.summary}
+          difficulty={cs.data.difficulty}
+          estimatedMinutes={cs.data.estimatedMinutes}
+          awsServices={cs.data.awsServices}
+          keyMetrics={cs.data.keyMetrics}
+          industry={cs.data.industry}
+          tags={cs.data.tags}
+          featured={cs.data.featured}
+        />
+      ))}
+    </div>
+  </section>
+</ModuleLayout>
+
+<style>
+  .module-cases-section {
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+  }
+
+  .section-title-row h2 {
+    font-size: 1.4rem;
+    color: var(--text-display);
+    margin: 0;
+    border: none;
+    padding: 0;
+  }
+
+  .cases-count-badge {
+    font-size: 0.775rem;
+    font-weight: 700;
+    color: var(--aws-orange);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+  }
+
+  .module-cases-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-6);
+  }
+</style>

@@ -1,0 +1,193 @@
+---
+moduleId: "04-databases"
+title: "E-Commerce Catalog & Orders: Relational vs NoSQL Polyglot Persistence"
+summary: "Splitting an e-commerce platform between Aurora Serverless v2 for ACID order transactions and DynamoDB for ultra-low latency product catalog reads."
+difficulty: "Intermediate"
+estimatedMinutes: 9
+industry: "E-Commerce & Retail"
+architectureStyle:
+  - "Polyglot Persistence"
+  - "Relational & NoSQL"
+awsServices:
+  - name: "Amazon Aurora Serverless v2"
+    category: "Database"
+    role: "Provides full ACID transactions, strict foreign keys, and financial integrity for orders and payments."
+  - name: "Amazon DynamoDB"
+    category: "Database"
+    role: "Handles 100,000+ reads/sec with single-digit ms latency for product catalog and inventory checks."
+  - name: "AWS RDS Proxy"
+    category: "Database"
+    role: "Pools and reuses database connections from thousands of concurrent serverless Lambda workers."
+keyMetrics:
+  - label: "Order Transaction Integrity"
+    value: "100% ACID"
+    trend: "up"
+  - label: "Catalog Read Latency"
+    value: "4ms (p99)"
+    trend: "down"
+  - label: "DB Connection Timeouts"
+    value: "0"
+    trend: "down"
+tags:
+  - "aurora"
+  - "dynamodb"
+  - "rds-proxy"
+  - "polyglot"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Catalog Read Latency", value: "4ms (p99)", trend: "down" },
+  { label: "ACID Financial Integrity", value: "100%", trend: "up" },
+  { label: "Database Connection Timeouts", value: "0", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An e-commerce retailer tried to store both product catalog browsing (read-heavy, unstructured attributes) and checkout orders (write-heavy, strict ACID, payment ledgers) inside a single standard PostgreSQL database. During flash sales, browsing traffic consumed 100% of PostgreSQL connection pools, causing checkout payments to fail.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Catalog Throughput</strong>: Handle 50,000+ browsing queries/sec with sub-10ms latency.</li>
+    <li><strong>Payment Integrity</strong>: Guarantee zero double-charges or corrupted inventory tallies.</li>
+    <li><strong>Connection Protection</strong>: Prevent ephemeral serverless compute from overwhelming database connections.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Polyglot Persistence Architecture"
+    diagram={`graph TD
+    Client([Shopper Traffic]) --> APIGW[Amazon API Gateway]
+    
+    subgraph MicroservicesTier [Service Layer]
+        CatalogLambda[Catalog Service Lambda]
+        CheckoutLambda[Checkout & Payment Lambda]
+    end
+
+    APIGW -->|GET /products/*| CatalogLambda
+    APIGW -->|POST /orders/checkout| CheckoutLambda
+
+    subgraph DataStorageTier [Polyglot Storage]
+        DDB[(Amazon DynamoDB: Product Catalog)]
+        Proxy[AWS RDS Proxy]
+        Aurora[(Aurora Serverless v2 PostgreSQL)]
+    end
+
+    CatalogLambda -->|GetItem / Query Single-Digit ms| DDB
+    CheckoutLambda -->|Pooled Connection| Proxy
+    Proxy -->|ACID Transaction Write| Aurora
+
+    style DDB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Aurora fill:#0B101C,stroke:#38BDF8,stroke-width:2px,color:#fff
+    style Proxy fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon DynamoDB",
+      category: "Database",
+      role: "Chosen for the product catalog to support flexible JSON schema attributes and sub-5ms partition reads."
+    },
+    {
+      name: "Amazon Aurora Serverless v2",
+      category: "Database",
+      role: "Provides PostgreSQL ACID transactions and auto-scales compute (ACUs) in fractions of a second."
+    },
+    {
+      name: "AWS RDS Proxy",
+      category: "Database",
+      role: "Shields Aurora from Lambda connection bursts by multiplexing thousands of client connections into a compact pool."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Single Monolithic Relational DB",
+      pros: ["Unified SQL queries", "Single database to manage"],
+      cons: ["Browsing traffic starves checkout transactions", "Connection limits (max_connections) easily reached"],
+      verdict: "Fails under high-volume e-commerce concurrency."
+    },
+    {
+      name: "Polyglot Persistence Split (Chosen)",
+      isChosen: true,
+      pros: ["Independent scaling", "Browsing traffic cannot crash checkout", "Ultra-fast catalog latency"],
+      cons: ["Requires dual data management and synchronization"],
+      verdict: "Standard enterprise architecture for e-commerce."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Why RDS Proxy is Mandatory for Serverless RDBMS Access" badge="Architecture Guard">
+    <p>
+      Each AWS Lambda invocation container opens a dedicated database connection. If 1,000 Lambda functions spin up during a flash sale, opening 1,000 PostgreSQL connections will consume <strong>~10GB of DB RAM</strong> just for connection memory, crashing the database engine.
+    </p>
+    <p>
+      <strong>AWS RDS Proxy</strong> sits between Lambda and Aurora, maintaining a pool of ~50 warm connections and multiplexing thousands of incoming Lambda queries across them seamlessly.
+    </p>
+  </DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Catalog Page Load</strong>: Improved from 140ms to <strong>18ms</strong>.</li>
+    <li><strong>Checkout Failures</strong>: Dropped from 3.2% during flash sales to <strong>0.00%</strong>.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Polyglot Rule:</strong> Use NoSQL (DynamoDB) where read velocity and flexible schemas dominate; use Relational (Aurora) where complex multi-table ACID transactions and financial guarantees are non-negotiable.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="ecommerce-catalog-orders"
+    questions={[
+      {
+        question: "What is the primary function of AWS RDS Proxy in serverless architectures?",
+        options: [
+          "It converts SQL queries into DynamoDB API calls automatically.",
+          "It pools and shares database connections, preventing serverless Lambda functions from exhausting relational database connection limits.",
+          "It enables multi-region active-active writes for MySQL.",
+          "It acts as a public internet gateway for PostgreSQL."
+        ],
+        correctIndex: 1,
+        explanation: "RDS Proxy pools connection handles and multiplexes client queries, preventing Lambda concurrency spikes from overwhelming database connection limits."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/rds-proxy.html" target="_blank" rel="noopener">Managing Connections with Amazon RDS Proxy</a></li>
+  </ul>
+</section>

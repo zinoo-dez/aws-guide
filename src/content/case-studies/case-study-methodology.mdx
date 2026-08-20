@@ -1,0 +1,260 @@
+---
+moduleId: "00-foundations"
+title: "Deconstructing Enterprise Architecture: The Case Study Method"
+summary: "How senior cloud architects reverse-engineer ambiguous business requirements into high-availability, cost-effective AWS topologies."
+difficulty: "Beginner"
+estimatedMinutes: 8
+industry: "Cloud Architecture & Education"
+architectureStyle:
+  - "Well-Architected"
+  - "System Design"
+awsServices:
+  - name: "AWS Organizations"
+    category: "Security"
+    role: "Centralized account management and Service Control Policies (SCPs)."
+  - name: "AWS Cost Explorer"
+    category: "Management"
+    role: "Visualizing and forecasting monthly cloud spend velocity."
+  - name: "IAM Identity Center"
+    category: "Security"
+    role: "SSO authentication and role federation across multiple accounts."
+keyMetrics:
+  - label: "Architecture Review Time"
+    value: "60% Faster"
+    trend: "up"
+  - label: "Unplanned Rework"
+    value: "75% Reduction"
+    trend: "down"
+tags:
+  - "foundations"
+  - "well-architected"
+  - "methodology"
+featured: true
+order: 1
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Architecture Review Velocity", value: "60% Faster", trend: "up" },
+  { label: "Unplanned Infrastructure Rework", value: "-75%", trend: "down" },
+  { label: "Cost Estimation Accuracy", value: "95%", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    When organizations build on AWS, engineering teams often jump straight to provisioning services before clarifying quantitative constraints. A typical ambiguous request sounds like: <em>"Build us an API backend that is scalable, fast, and cheap."</em>
+  </p>
+  <p>
+    Without architectural rigor, teams over-provision expensive dedicated instances or under-design resilience against Availability Zone outages, leading to budget blowouts and downtime.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Constraint Dimension</th>
+        <th>Unclear Request</th>
+        <th>Architectural Translation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Availability</strong></td>
+        <td>"High uptime"</td>
+        <td><strong>99.95% SLA</strong> (≤ 21.9 mins downtime/month), Multi-AZ active-active compute.</td>
+      </tr>
+      <tr>
+        <td><strong>Performance</strong></td>
+        <td>"Must be fast"</td>
+        <td><strong>p99 Latency &lt; 80ms</strong> at 5,000 requests/second peak.</td>
+      </tr>
+      <tr>
+        <td><strong>Disaster Recovery</strong></td>
+        <td>"Don't lose data"</td>
+        <td><strong>RPO ≤ 5 mins</strong> (point-in-time recovery), <strong>RTO ≤ 30 mins</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Budget Boundary</strong></td>
+        <td>"Cost-effective"</td>
+        <td>Maximum <strong>$450/month</strong> baseline spend with auto-scale ceilings.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="The 4-Stage Architectural Decision Engine"
+    diagram={`graph TD
+    Req[1. Business Needs & Quantitative Constraints] --> Eval[2. Trade-Off Evaluation Matrix]
+    Eval --> Proto[3. Reference Architecture Topology]
+    Proto --> Review[4. Well-Architected 6-Pillar Review]
+    Review --> Prod[Production Deployment & IaC]
+    
+    style Req fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Eval fill:#101728,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style Review fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style Prod fill:#18223B,stroke:#A78BFA,stroke-width:2px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Extract Hard SLOs</strong>: Convert business language into numbers (latency, RTO, RPO, concurrency).</li>
+    <li><strong>Isolate State from Compute</strong>: Ensure application compute tiers are completely stateless.</li>
+    <li><strong>Evaluate Managed vs Unmanaged</strong>: Default to serverless/managed platforms unless specific runtime controls are required.</li>
+    <li><strong>Audit Failure Modes</strong>: Verify how the system behaves if any single AWS AZ or service API experiences degradation.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS Organizations",
+      category: "Security",
+      role: "Provides multi-account structure (Core, Dev, Staging, Prod) preventing cross-environment blast radiuses."
+    },
+    {
+      name: "AWS Cost Explorer",
+      category: "Management",
+      role: "Tracks cost trends and sets automated anomaly detection alerts."
+    },
+    {
+      name: "IAM Identity Center",
+      category: "Security",
+      role: "Enforces temporary least-privilege credentials via single sign-on."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Single-Account Ad-Hoc Setup",
+      pros: ["Quickest initial setup", "Zero organizational overhead"],
+      cons: ["Huge blast radius", "Accidental production teardowns", "Messy IAM"],
+      verdict: "Unacceptable for production."
+    },
+    {
+      name: "Multi-Account AWS Organizations (Chosen)",
+      isChosen: true,
+      pros: ["Isolated blast radius per environment", "Fine-grained Service Control Policies", "Consolidated billing"],
+      cons: ["Requires initial Landing Zone setup"],
+      verdict: "Mandatory foundation for any enterprise AWS workload."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  
+  <DeepDiveAccordion title="AWS Organizations Multi-Account Topology" badge="Security Architecture">
+    <p>
+      In a production setup, you should split accounts using AWS Control Tower or AWS Organizations:
+    </p>
+    <ul>
+      <li><strong>Management Account</strong>: Dedicated purely to billing and consolidated reporting (zero application workloads).</li>
+      <li><strong>Security Tooling Account</strong>: Houses GuardDuty master, AWS Config aggregators, and central KMS keys.</li>
+      <li><strong>Log Archive Account</strong>: Immutable S3 bucket holding all CloudTrail and VPC Flow Logs with Object Lock enabled.</li>
+      <li><strong>Workload Accounts</strong>: Separate accounts for <code>Development</code>, <code>Staging</code>, and <code>Production</code>.</li>
+    </ul>
+  </DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Architecture Review Speed</strong>: 60% faster sign-offs through structured requirements extraction.</li>
+    <li><strong>Blast Radius Containment</strong>: 100% isolation between developer testing and production infrastructure.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Core Principle:</strong> Never choose a service because it is popular; choose it because its operational model, failure characteristics, and pricing curve match your specific SLOs.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="case-study-methodology"
+    questions={[
+      {
+        question: "Why should the AWS Organizations Management (root) account never host production or application workloads?",
+        options: [
+          "Because AWS billing data is stored in ephemeral memory and will be erased if EC2 instances reboot.",
+          "To eliminate cross-account blast radius and prevent a workload compromise from granting full organizational root control.",
+          "Because the Management account does not support VPC Peering or Transit Gateway attachments.",
+          "To avoid paying double AWS Support plan surcharges on active compute instances."
+        ],
+        correctIndex: 1,
+        explanation: "The Management account possesses ultimate administrative authority across all member accounts. Running workloads in it creates an catastrophic security risk where an application vulnerability or compromised container could grant complete root takeover of the entire AWS Organization."
+      },
+      {
+        question: "In Disaster Recovery architecture, what is the precise distinction between RTO and RPO?",
+        options: [
+          "RTO measures maximum allowable data loss in time; RPO measures maximum acceptable system downtime.",
+          "RTO measures maximum allowable downtime to restore service; RPO measures maximum acceptable data loss measured in time.",
+          "RTO applies exclusively to stateful databases, while RPO applies to stateless compute clusters.",
+          "RTO is an operational financial budget metric, while RPO is a network bandwidth ceiling."
+        ],
+        correctIndex: 1,
+        explanation: "Recovery Time Objective (RTO) is the maximum acceptable duration of system downtime before service is restored. Recovery Point Objective (RPO) is the maximum acceptable age of data lost due to an incident (e.g., losing the last 5 minutes of transactional logs)."
+      },
+      {
+        question: "How do Service Control Policies (SCPs) interact with IAM permissions in a member AWS account?",
+        options: [
+          "SCPs grant permissions directly to IAM users without requiring IAM policy attachments.",
+          "SCPs act as a guardrail filter (boundary ceiling); an action is allowed only if BOTH the SCP allows it and IAM explicitly grants it.",
+          "IAM policies take precedence over SCPs if an IAM policy includes an explicit Allow statement.",
+          "SCPs only apply to the root user and have no effect on IAM roles assumed by applications."
+        ],
+        correctIndex: 1,
+        explanation: "SCPs set the maximum available permissions for an account. They never grant permissions on their own; rather, they specify what actions can be delegated. An action is permitted only when it is permitted by the SCP AND explicitly granted by an IAM policy."
+      },
+      {
+        question: "When evaluating architectural trade-offs between Multi-AZ and Multi-Region architectures, what is the primary drawback of Multi-Region Active-Active systems?",
+        options: [
+          "Multi-Region active-active setups require running custom hardware on AWS Outposts.",
+          "Cross-region data replication introduces asynchronous latency and complex distributed conflict resolution (CAP theorem constraints).",
+          "AWS CloudFront cannot route requests to more than one AWS Region simultaneously.",
+          "Application Load Balancers cannot terminate SSL certificates across multiple availability zones."
+        ],
+        correctIndex: 1,
+        explanation: "Due to the speed of light across physical geographic distances, cross-region replication is almost always asynchronous. This forces architects to design for eventual consistency, distributed split-brain scenarios, and cross-region egress costs."
+      },
+      {
+        question: "Which AWS Well-Architected Framework pillar prioritizes adopting managed serverless services to reduce undifferentiated heavy lifting and optimize idle resource expenditure?",
+        options: [
+          "Security Pillar",
+          "Cost Optimization & Sustainability Pillars",
+          "Reliability Pillar only",
+          "Operational Excellence (specifically change management)"
+        ],
+        correctIndex: 1,
+        explanation: "The Cost Optimization and Sustainability pillars encourage replacing over-provisioned, idle virtual machines with managed serverless services (e.g., S3, Lambda, Aurora Serverless) so organizations pay strictly for consumed capacity while eliminating infrastructure maintenance waste."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://aws.amazon.com/architecture/well-architected/" target="_blank" rel="noopener">AWS Well-Architected Framework</a></li>
+    <li><a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html" target="_blank" rel="noopener">AWS Organizations Best Practices</a></li>
+  </ul>
+</section>

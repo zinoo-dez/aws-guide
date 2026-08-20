@@ -1,0 +1,209 @@
+---
+moduleId: "10-capstones"
+title: "Smart Connected Fleet: Ingesting Telemetry from 500,000 Vehicles"
+summary: "High-scale IoT ingestion pipeline handling 500k connected vehicles with AWS IoT Core MQTT message broker, Amazon Timestream, and real-time anomaly alerting."
+difficulty: "Expert"
+estimatedMinutes: 11
+industry: "Automotive & Industrial IoT"
+architectureStyle:
+  - "IoT Core & Streaming"
+  - "Time-Series Database"
+awsServices:
+  - name: "AWS IoT Core"
+    category: "IoT"
+    role: "Manages bidirectional MQTT message broker connections with X.509 device certificate authentication."
+  - name: "Amazon Timestream"
+    category: "Database"
+    role: "Serverless time-series database optimized for vehicle GPS, speed, battery, and engine diagnostics."
+  - name: "Amazon Kinesis Data Streams"
+    category: "Analytics"
+    role: "Decouples message broker throughput spikes from real-time analytics engines."
+  - name: "Amazon SageMaker"
+    category: "Analytics"
+    role: "Detects battery cell anomalies and predicts engine failures before roadside breakdown."
+keyMetrics:
+  - label: "Connected Vehicles"
+    value: "500,000"
+    trend: "up"
+  - label: "Ingress Telemetry Messages"
+    value: "1.2 Billion / day"
+    trend: "up"
+  - label: "Breakdown Prevention"
+    value: "+34%"
+    trend: "up"
+tags:
+  - "iot"
+  - "timestream"
+  - "mqtt"
+  - "kinesis"
+  - "capstone"
+featured: true
+order: 4
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Active Connected Vehicles", value: "500k+", trend: "up" },
+  { label: "Daily Ingestion Messages", value: "1.2B msgs/day", trend: "up" },
+  { label: "Predictive Maintenance Alert", value: "< 5 seconds", trend: "down" },
+  { label: "Time-Series Query Speed", value: "24ms", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An electric vehicle manufacturer maintains a fleet of 500,000 connected cars worldwide. Every vehicle transmits 50 telemetry points (battery voltage, motor temperature, tire pressure, GPS coordinates) every 10 seconds over cellular networks. The legacy polling architecture suffered from dropped packets in tunnels and collapsed under 1.2 Billion daily telemetry messages.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Lightweight Cellular Protocol</strong>: Use standard MQTT over TLS with minimal bandwidth consumption.</li>
+    <li><strong>Massive Scalability</strong>: Ingest up to 60,000 telemetry messages/second during rush hour peaks.</li>
+    <li><strong>Time-Series Compression</strong>: Store 3 years of historical vehicle telemetry while keeping storage costs manageable.</li>
+    <li><strong>Real-Time Collision / Critical Alerting</strong>: Trigger emergency dispatch in &lt; 3 seconds upon crash sensor trigger.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Connected Fleet IoT Telemetry Architecture"
+    diagram={`graph TD
+    Vehicle([500,000 Connected Electric Vehicles]) -->|MQTT over TLS:8883 (X.509 Cert)| IoTCore[AWS IoT Core Message Broker]
+    
+    subgraph IoTRulesEngine [IoT Rules Engine Routing]
+        IoTCore -->|SELECT * FROM 'vehicles/+/telemetry'| Kinesis[Amazon Kinesis Data Stream]
+        IoTCore -->|SELECT * WHERE crash_detected = true| UrgentLambda[Emergency Dispatch Lambda]
+    end
+
+    UrgentLambda -->|Immediate Alert| SNS[Amazon SNS: First Responders]
+
+    Kinesis --> TimestreamWriter[Lambda Batch Writer]
+    TimestreamWriter --> Timestream[(Amazon Timestream: In-Memory & Magnetic Tiers)]
+    
+    Timestream --> SageMaker[SageMaker: Predictive Maintenance ML]
+
+    style IoTCore fill:#18223B,stroke:#F97316,stroke-width:2px,color:#fff
+    style Timestream fill:#0B101C,stroke:#38BDF8,stroke-width:2px,color:#fff
+    style Kinesis fill:#101728,stroke:#E879F9,stroke-width:1px,color:#fff`}
+  />
+
+  <ol>
+    <li><strong>Mutual TLS Authentication</strong>: Vehicles authenticate to AWS IoT Core using dedicated device X.509 certificates provisioned in factory HSM chips.</li>
+    <li><strong>IoT SQL Rules Engine</strong>: Evaluates incoming JSON payloads and splits normal telemetry from urgent crash alerts.</li>
+    <li><strong>Kinesis Buffer Stream</strong>: Buffers massive telemetry surges and batches writes to Amazon Timestream.</li>
+    <li><strong>Tiered Time-Series Storage</strong>: Amazon Timestream stores the most recent 24 hours of data in ultra-fast in-memory storage, automatically transitioning older data to magnetic storage at 90% lower cost.</li>
+  </ol>
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS IoT Core",
+      category: "IoT",
+      role: "Maintains persistent, low-overhead MQTT connections to 500,000 vehicles with X.509 certificate authentication."
+    },
+    {
+      name: "Amazon Timestream",
+      category: "Database",
+      role: "Serverless time-series database that scales storage and queries independently with automated data tiering."
+    },
+    {
+      name: "Amazon Kinesis Data Streams",
+      category: "Analytics",
+      role: "Buffers high-frequency vehicle telemetry bursts and enables multiple downstream consumer applications."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Custom EC2 Mosquitto Broker + Self-Hosted InfluxDB",
+      pros: ["Open source"],
+      cons: ["High maintenance overhead", "Complex clustering and disk resizing", "Vulnerable to cellular reconnect storms"],
+      verdict: "High operational risk."
+    },
+    {
+      name: "AWS IoT Core + Amazon Timestream (Chosen)",
+      isChosen: true,
+      pros: ["Fully managed serverless MQTT broker", "Automated in-memory to magnetic storage tiering", "Built-in time-series SQL functions"],
+      cons: ["Requires IoT Rules Engine configuration"],
+      verdict: "Industry standard architecture for connected vehicle fleets."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="AWS IoT Core SQL Topic Rule" badge="IoT Rule SQL">
+
+```
+-- IoT Rule to filter urgent battery overheating alerts
+SELECT 
+  topic(2) as vehicle_id, 
+  battery_temp_celsius, 
+  speed_kmh, 
+  gps_lat, 
+  gps_lon,
+  timestamp() as received_at
+FROM 'vehicles/+/telemetry'
+WHERE battery_temp_celsius > 55.0
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Daily Ingestion</strong>: Successfully processes over <strong>1.2 Billion messages per day</strong>.</li>
+    <li><strong>Predictive Maintenance</strong>: Reduced roadside breakdown incidents by <strong>34%</strong> via early ML detection.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>IoT Architecture Law:</strong> For connected devices, always decouple the device connection broker (AWS IoT Core) from the analytics storage engine (Amazon Timestream) using streaming buffers (Amazon Kinesis) to withstand cellular reconnect storms.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="smart-fleet-iot-telemetry"
+    questions={[
+      {
+        question: "Why is the MQTT protocol preferred over HTTP for connected vehicle telemetry?",
+        options: [
+          "MQTT is completely unencrypted.",
+          "MQTT uses a lightweight binary header (2 bytes) and persistent TCP connection, saving massive cellular data bandwidth compared to bulky HTTP request headers.",
+          "MQTT cannot be used with AWS Lambda.",
+          "MQTT only works with Wi-Fi."
+        ],
+        correctIndex: 1,
+        explanation: "MQTT headers are as small as 2 bytes, whereas HTTP headers can exceed 1KB per request. Over 1.2 billion daily messages, MQTT saves terabytes of costly cellular data."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://aws.amazon.com/iot-core/" target="_blank" rel="noopener">AWS IoT Core Features</a></li>
+    <li><a href="https://aws.amazon.com/timestream/" target="_blank" rel="noopener">Amazon Timestream Time-Series Database</a></li>
+  </ul>
+</section>

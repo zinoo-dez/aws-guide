@@ -1,0 +1,299 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ModuleSidebar from '../components/layout/ModuleSidebar.astro';
+import TableOfContents from '../components/layout/TableOfContents.astro';
+import ProgressBar from '../components/ui/ProgressBar.astro';
+import Badge from '../components/ui/Badge.astro';
+
+interface ServiceItem {
+  name: string;
+  category: string;
+  role: string;
+}
+
+interface Metric {
+  label: string;
+  value: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+interface ModuleInfo {
+  id: string;
+  moduleNumber: number;
+  title: string;
+  theme: string;
+}
+
+interface CaseStudyInfo {
+  slug: string;
+  title: string;
+  moduleId: string;
+  difficulty: string;
+  estimatedMinutes: number;
+}
+
+interface Props {
+  title: string;
+  summary: string;
+  moduleId: string;
+  moduleTitle?: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  estimatedMinutes: number;
+  industry?: string;
+  architectureStyle?: string[];
+  awsServices?: ServiceItem[];
+  keyMetrics?: Metric[];
+  allModules?: ModuleInfo[];
+  allCaseStudies?: CaseStudyInfo[];
+}
+
+const {
+  title,
+  summary,
+  moduleId,
+  moduleTitle = '',
+  difficulty,
+  estimatedMinutes,
+  industry,
+  architectureStyle = [],
+  awsServices = [],
+  allModules = [],
+  allCaseStudies = [],
+} = Astro.props;
+
+const currentSlug = Astro.url.pathname.split('/').filter(Boolean).pop() || '';
+---
+
+<BaseLayout title={`${title} | AWS Architecture Guild`} description={summary}>
+  <ProgressBar />
+
+  <div class="case-study-page-wrapper container">
+    <!-- Left Column: Module Sidebar -->
+    <div class="case-sidebar-col">
+      <ModuleSidebar 
+        currentModuleId={moduleId} 
+        currentCaseSlug={currentSlug}
+        allModules={allModules}
+        allCaseStudies={allCaseStudies}
+      />
+    </div>
+
+    <!-- Center Column: Case Study Stream -->
+    <article class="case-main-col">
+      <!-- Breadcrumbs -->
+      <nav class="case-breadcrumbs" aria-label="Breadcrumbs">
+        <a href="/">Home</a>
+        <span class="sep">/</span>
+        <a href="/modules">Modules</a>
+        <span class="sep">/</span>
+        <a href={`/modules/${moduleId}`}>{moduleTitle || moduleId}</a>
+        <span class="sep">/</span>
+        <span class="current-crumb">{title}</span>
+      </nav>
+
+      <!-- Case Study Hero Header -->
+      <header class="case-header">
+        <div class="header-badges">
+          <Badge variant="difficulty" type={difficulty} size="md" />
+          {industry && <Badge variant="default" size="md">{industry}</Badge>}
+          {architectureStyle.map(style => (
+            <Badge variant="style" size="md">{style}</Badge>
+          ))}
+        </div>
+
+        <h1 class="case-title">{title}</h1>
+        <p class="case-summary">{summary}</p>
+
+        <div class="case-meta-row">
+          <div class="meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Reading Time: <strong>{estimatedMinutes} mins</strong></span>
+          </div>
+
+          <div class="meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            </svg>
+            <span>AWS Services: <strong>{awsServices.length} integrated</strong></span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content slot -->
+      <div class="case-body-content markdown-body">
+        <slot />
+      </div>
+    </article>
+
+    <!-- Right Column: Table of Contents -->
+    <div class="case-toc-col">
+      <TableOfContents />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .case-study-page-wrapper {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr) 240px;
+    gap: var(--space-8);
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-16);
+    align-items: start;
+  }
+
+  .case-sidebar-col {
+    position: sticky;
+    top: 80px;
+  }
+
+  .case-main-col {
+    width: 100%;
+    max-width: 860px;
+    min-width: 0;
+  }
+
+  .case-toc-col {
+    position: sticky;
+    top: 80px;
+  }
+
+  .case-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .case-breadcrumbs a {
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+  }
+
+  .case-breadcrumbs a:hover {
+    color: var(--aws-orange);
+  }
+
+  .current-crumb {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .case-header {
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .header-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+
+  .case-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+    color: var(--text-display);
+    margin-bottom: var(--space-3);
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .case-summary {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-4);
+  }
+
+  .case-meta-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface-2);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .meta-item svg {
+    color: var(--aws-orange);
+    flex-shrink: 0;
+  }
+
+  .meta-item strong {
+    color: var(--text-primary);
+  }
+
+  /* Markdown body enhancements */
+  :global(.markdown-body section) {
+    margin-bottom: var(--space-8);
+  }
+
+  :global(.markdown-body h2) {
+    font-size: 1.45rem;
+    color: var(--text-display);
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  :global(.markdown-body h3) {
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+
+  :global(.markdown-body ul), :global(.markdown-body ol) {
+    padding-left: 1.5rem;
+    margin-bottom: var(--space-4);
+    color: var(--text-primary);
+  }
+
+  :global(.markdown-body li) {
+    margin-bottom: 0.35rem;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+
+  @media (max-width: 1180px) {
+    .case-study-page-wrapper {
+      grid-template-columns: 260px 1fr;
+    }
+    .case-toc-col {
+      display: none;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .case-study-page-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .case-sidebar-col {
+      display: none;
+    }
+  }
+</style>

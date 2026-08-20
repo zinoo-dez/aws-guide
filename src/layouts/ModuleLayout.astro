@@ -1,0 +1,256 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ModuleSidebar from '../components/layout/ModuleSidebar.astro';
+import Badge from '../components/ui/Badge.astro';
+
+interface CaseStudyInfo {
+  slug: string;
+  title: string;
+  moduleId: string;
+  difficulty: string;
+  estimatedMinutes: number;
+}
+
+interface ModuleInfo {
+  id: string;
+  moduleNumber: number;
+  title: string;
+  theme: string;
+}
+
+interface Props {
+  moduleNumber: number;
+  title: string;
+  tagline: string;
+  theme: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  estimatedHours: number;
+  keyServices: string[];
+  allModules?: ModuleInfo[];
+  allCaseStudies?: CaseStudyInfo[];
+}
+
+const {
+  moduleNumber,
+  title,
+  tagline,
+  theme,
+  difficulty,
+  estimatedHours,
+  keyServices = [],
+  allModules = [],
+  allCaseStudies = [],
+} = Astro.props;
+
+const currentModuleId = Astro.url.pathname.split('/').filter(Boolean).pop() || '';
+---
+
+<BaseLayout title={`Module ${moduleNumber}: ${title} | AWS Architecture Guild`} description={tagline}>
+  <div class="module-page-wrapper container">
+    <!-- Left Column: Module Sidebar -->
+    <div class="module-sidebar-col">
+      <ModuleSidebar 
+        currentModuleId={currentModuleId}
+        allModules={allModules}
+        allCaseStudies={allCaseStudies}
+      />
+    </div>
+
+    <!-- Center Content -->
+    <div class="module-main-col">
+      <!-- Breadcrumbs -->
+      <nav class="module-breadcrumbs" aria-label="Breadcrumbs">
+        <a href="/">Home</a>
+        <span class="sep">/</span>
+        <a href="/modules">Modules</a>
+        <span class="sep">/</span>
+        <span class="current-crumb">Module {moduleNumber}</span>
+      </nav>
+
+      <!-- Module Hero Header -->
+      <header class="module-hero-header">
+        <div class="header-badges">
+          <span class="module-id-badge">Module {moduleNumber}</span>
+          <Badge variant="difficulty" type={difficulty} size="md" />
+          <span class="theme-pill">{theme}</span>
+        </div>
+
+        <h1 class="module-title">{title}</h1>
+        <p class="module-tagline">{tagline}</p>
+
+        <div class="module-meta-banner">
+          <div class="meta-item">
+            <span class="meta-label">Estimated Time</span>
+            <span class="meta-val">{estimatedHours} Hours</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Primary Services</span>
+            <div class="services-list-pills">
+              {keyServices.map(svc => (
+                <span class="service-pill">{svc}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="module-body markdown-body">
+        <slot />
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .module-page-wrapper {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: var(--space-8);
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-16);
+    align-items: start;
+  }
+
+  .module-sidebar-col {
+    position: sticky;
+    top: 80px;
+  }
+
+  .module-main-col {
+    width: 100%;
+    max-width: 920px;
+    min-width: 0;
+  }
+
+  .module-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-4);
+  }
+
+  .module-breadcrumbs a {
+    color: var(--text-secondary);
+  }
+
+  .module-breadcrumbs a:hover {
+    color: var(--aws-orange);
+  }
+
+  .current-crumb {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .module-hero-header {
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .header-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+
+  .module-id-badge {
+    font-family: var(--font-display);
+    font-size: 0.775rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    background: var(--aws-orange);
+    color: #FFFFFF;
+  }
+
+  :root:not([data-theme="light"]) .module-id-badge {
+    color: #000000;
+  }
+
+  .theme-pill {
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    background: var(--bg-surface-3);
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .module-title {
+    font-size: clamp(2rem, 3.5vw, 2.75rem);
+    color: var(--text-display);
+    margin-bottom: var(--space-2);
+  }
+
+  .module-tagline {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--space-4);
+  }
+
+  .module-meta-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-surface-2);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .meta-label {
+    font-size: 0.725rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .meta-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+
+  .services-list-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .service-pill {
+    font-size: 0.775rem;
+    font-family: var(--font-mono);
+    background: var(--bg-surface-3);
+    color: var(--text-code);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+  }
+
+  @media (max-width: 860px) {
+    .module-page-wrapper {
+      grid-template-columns: 1fr;
+    }
+    .module-sidebar-col {
+      display: none;
+    }
+  }
+</style>

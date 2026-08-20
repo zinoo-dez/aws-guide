@@ -1,0 +1,221 @@
+---
+moduleId: "10-capstones"
+title: "FinTech Active-Active Core Banking: Zero-RPO Multi-Region Ledger"
+summary: "Architecting a multi-region active-active core banking ledger across us-east-1 and us-west-2 with DynamoDB Global Tables, AWS KMS envelope encryption, and Route 53 ARC."
+difficulty: "Expert"
+estimatedMinutes: 11
+industry: "Banking & Financial Services"
+architectureStyle:
+  - "Multi-Region Active-Active"
+  - "Zero-RPO Resilience"
+awsServices:
+  - name: "Route 53 Application Recovery Controller (ARC)"
+    category: "Networking"
+    role: "Manages failover readiness checks and routing control switches across regions without DNS propagation delays."
+  - name: "Amazon DynamoDB Global Tables"
+    category: "Database"
+    role: "Multi-region active-active fully managed ledger with sub-second cross-ocean data replication."
+  - name: "AWS Key Management Service (KMS)"
+    category: "Security"
+    role: "Multi-Region Customer Managed Keys (CMKs) ensuring identical encryption keys in primary and secondary regions."
+  - name: "AWS Lambda & Fargate"
+    category: "Compute"
+    role: "Stateless banking microservices running synchronously in both regions."
+keyMetrics:
+  - label: "Data Loss (RPO)"
+    value: "0.00 seconds"
+    trend: "down"
+  - label: "Failover Time (RTO)"
+    value: "< 10 seconds"
+    trend: "down"
+  - label: "Availability SLA"
+    value: "99.999% (5 9s)"
+    trend: "up"
+tags:
+  - "multi-region"
+  - "banking"
+  - "dynamodb-global"
+  - "kms"
+  - "route53-arc"
+  - "capstone"
+featured: true
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Recovery Point Objective (RPO)", value: "0.00 seconds", trend: "down" },
+  { label: "Recovery Time Objective (RTO)", value: "< 10 seconds", trend: "down" },
+  { label: "Availability Target", value: "99.999% (5 Nines)", trend: "up" },
+  { label: "Cross-Region Replication Lag", value: "< 650ms", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A digital commercial bank processes over $40 Billion in daily transactions. Central bank regulatory mandates required a maximum <strong>Recovery Point Objective (RPO) of 0 seconds</strong> (zero financial transaction loss) and a <strong>Recovery Time Objective (RTO) under 60 seconds</strong> in the catastrophic event that an entire AWS geographical region (e.g. all AZs in <code>us-east-1</code>) experiences complete loss of power or connectivity.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Active-Active Multi-Region</strong>: Users in both East and West coasts write to their nearest regional endpoint simultaneously.</li>
+    <li><strong>Deterministic Conflict Resolution</strong>: Last-writer-wins conflict resolution with logical version numbers on bank accounts.</li>
+    <li><strong>Zero-DNS Propagation Failover</strong>: Route 53 ARC routing controls must reroute 100% of traffic within 10 seconds without waiting for TTL expiration.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Multi-Region Active-Active Banking Ledger Topology"
+    diagram={`graph TD
+    Client([Global Banking Mobile Apps]) --> ARC[Route 53 Application Recovery Controller]
+    
+    ARC -->|50% Ingress (Normal)| Region1[Region: us-east-1 - Primary]
+    ARC -->|50% Ingress (Normal)| Region2[Region: us-west-2 - Primary]
+
+    subgraph US_East_1 [Region: us-east-1]
+        ALB1[Application Load Balancer 1]
+        Compute1[Banking Engine Microservices]
+        DDB1[(DynamoDB Global Table - East)]
+        KMS1[Multi-Region KMS Key: East]
+        ALB1 --> Compute1
+        Compute1 --> DDB1
+        Compute1 -.-> KMS1
+    end
+
+    subgraph US_West_2 [Region: us-west-2]
+        ALB2[Application Load Balancer 2]
+        Compute2[Banking Engine Microservices]
+        DDB2[(DynamoDB Global Table - West)]
+        KMS2[Multi-Region KMS Key: West Replica]
+        ALB2 --> Compute2
+        Compute2 --> DDB2
+        Compute2 -.-> KMS2
+    end
+
+    DDB1 <-->|Bi-Directional Multi-Master Sync < 800ms| DDB2
+
+    style ARC fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style US_East_1 fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff
+    style US_West_2 fill:#0B101C,stroke:#10B981,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon DynamoDB Global Tables",
+      category: "Database",
+      role: "Provides fully managed active-active multi-master replication with built-in conflict resolution and sub-second cross-region lag."
+    },
+    {
+      name: "Route 53 Application Recovery Controller",
+      category: "Networking",
+      role: "Provides redundant Regional Routing Controls that can shift millions of users in under 10 seconds via API calls."
+    },
+    {
+      name: "AWS KMS Multi-Region Keys",
+      category: "Security",
+      role: "Replicates primary cryptographic keys across regions so encrypted data in us-east-1 can be instantly decrypted in us-west-2."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Active-Passive Pilot Light (Async Aurora Backup)",
+      pros: ["Lower compute bill during normal operations"],
+      cons: ["RTO is 15-30 minutes while instances spin up", "Possible RPO data loss during replication lag"],
+      verdict: "Fails strict 5-Nines core banking regulatory requirements."
+    },
+    {
+      name: "Active-Active Multi-Region with DynamoDB Global Tables (Chosen)",
+      isChosen: true,
+      pros: ["Zero downtime during regional disasters", "RTO < 10 seconds", "Local sub-20ms latency for users on both coasts"],
+      cons: ["Requires careful design to prevent simultaneous conflicting balance updates (account sharding by region)"],
+      verdict: "The undisputed blueprint for modern financial cloud resilience."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="DynamoDB Conditional Ledger Balance Check" badge="Financial Safety">
+
+```
+// Atomic debit transaction ensuring account balance >= withdrawal amount
+const command = new TransactWriteItemsCommand({
+  TransactItems: [
+    {
+      Update: {
+        TableName: "bank_accounts_global",
+        Key: { PK: { S: `ACC#${accountId}` } },
+        UpdateExpression: "SET balance = balance - :val, version = version + :inc",
+        ConditionExpression: "balance >= :val AND attribute_exists(PK)",
+        ExpressionAttributeValues: {
+          ":val": { N: amount.toString() },
+          ":inc": { N: "1" }
+        }
+      }
+    }
+  ]
+});
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>RPO / RTO</strong>: Verified in regional chaos simulations: <strong>0.00s data loss, 8.4s total traffic redirection</strong>.</li>
+    <li><strong>Availability</strong>: Achieved <strong>99.999% uptime</strong> over 3 consecutive years.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Multi-Region Law:</strong> Active-active multi-region requires three synchronized pillars: <strong>Multi-Master Data (DynamoDB Global Tables)</strong>, <strong>Multi-Region Encryption (KMS Multi-Region Keys)</strong>, and <strong>Instant Routing Failover (Route 53 ARC)</strong>.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="fintech-core-banking-migration"
+    questions={[
+      {
+        question: "Why are AWS KMS Multi-Region Keys required for multi-region active-active architectures?",
+        options: [
+          "Standard KMS keys cannot encrypt database passwords.",
+          "Standard KMS keys are bound strictly to a single AWS region; Multi-Region Keys share the same key ID and key material across regions, enabling seamless cross-region decryption.",
+          "To reduce KMS billing by 80%.",
+          "KMS Multi-Region keys bypass IAM."
+        ],
+        correctIndex: 1,
+        explanation: "Standard KMS keys are strictly regional. If data encrypted in us-east-1 replicates to us-west-2, only a Multi-Region Key allows the west region to decrypt that data."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/r53recovery/latest/dg/what-is-route-53-recovery.html" target="_blank" rel="noopener">Route 53 Application Recovery Controller</a></li>
+  </ul>
+</section>

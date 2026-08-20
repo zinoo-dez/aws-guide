@@ -1,0 +1,192 @@
+---
+moduleId: "03-serverless-apps"
+title: "Global Serverless URL Shortener: Sub-15ms Redirection"
+summary: "Architecting a high-throughput, low-latency URL redirection engine with API Gateway HTTP APIs, Lambda, and DynamoDB single-table design."
+difficulty: "Beginner"
+estimatedMinutes: 6
+industry: "SaaS & Marketing Tech"
+architectureStyle:
+  - "Serverless"
+  - "Low Latency"
+awsServices:
+  - name: "API Gateway HTTP APIs"
+    category: "Serverless"
+    role: "Provides lightweight, ultra-low-latency API routing (70% cheaper than REST APIs)."
+  - name: "Amazon DynamoDB"
+    category: "Database"
+    role: "Single-digit millisecond primary key lookups (ShortCode -> TargetURL)."
+  - name: "AWS Lambda"
+    category: "Compute"
+    role: "ARM64 (Graviton2) runtime executing Base62 encoding and 301 redirects."
+keyMetrics:
+  - label: "p99 Redirect Latency"
+    value: "14ms"
+    trend: "down"
+  - label: "Monthly Cost / 10M Clicks"
+    value: "$14.20"
+    trend: "down"
+tags:
+  - "lambda"
+  - "dynamodb"
+  - "api-gateway"
+  - "graviton"
+featured: false
+order: 3
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "p99 Redirect Latency", value: "14ms", trend: "down" },
+  { label: "Cost per 1M Redirects", value: "$1.42", trend: "down" },
+  { label: "Availability SLA", value: "99.99%", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A digital marketing enterprise needed a branded URL shortener service handling over 30 million link clicks monthly. Traditional relational database architectures struggled with read concurrency and incurred high baseline server hosting fees even during off-peak hours.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Sub-20ms Redirects</strong>: Return <code>HTTP 301 Moved Permanently</code> immediately.</li>
+    <li><strong>Near-Zero Maintenance</strong>: Completely serverless infrastructure with auto-scaling.</li>
+    <li><strong>Cost Optimization</strong>: Budget under $50/month for 30 million monthly link visits.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Serverless URL Shortener Architecture"
+    diagram={`graph LR
+    User([End User Browser]) -->|GET /xyz789| APIGW[API Gateway HTTP API]
+    APIGW -->|Payload Format 2.0| Lambda[Lambda Redirect Handler - ARM64]
+    Lambda -->|GetItem: PK=SHORT#xyz789| DDB[(DynamoDB On-Demand)]
+    Lambda -->|Return 301 Location: https://target.com| User
+    
+    style APIGW fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style Lambda fill:#101728,stroke:#A78BFA,stroke-width:1px,color:#fff
+    style DDB fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "API Gateway HTTP APIs",
+      category: "Serverless",
+      role: "Chosen over REST APIs for 60% lower latency overhead and $1.00/million pricing."
+    },
+    {
+      name: "AWS Lambda (Graviton2 ARM64)",
+      category: "Compute",
+      role: "Delivers 20% better price-performance compared to x86_64 architectures."
+    },
+    {
+      name: "Amazon DynamoDB (On-Demand)",
+      category: "Database",
+      role: "Provides consistent 2-4ms key-value lookups with zero capacity provisioning required."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "API Gateway REST APIs",
+      pros: ["Built-in API keys", "Request validation models"],
+      cons: ["$3.50/million requests", "Higher latency (30-50ms)"],
+      verdict: "Unnecessary cost and latency for simple redirects."
+    },
+    {
+      name: "API Gateway HTTP APIs + DynamoDB (Chosen)",
+      isChosen: true,
+      pros: ["$1.00/million requests", "Sub-15ms response times", "Zero cold start latency on small bundles"],
+      cons: ["Fewer legacy transformation features"],
+      verdict: "Perfect fit for high-volume, low-complexity routing."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Sub-5ms Lambda 301 Redirect Handler" badge="Code Recipe">
+
+```
+import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+const ddb = new DynamoDBClient({ region: process.env.AWS_REGION });
+
+export const handler = async (event) => {
+  const code = event.pathParameters.code;
+  const result = await ddb.send(new GetItemCommand({
+    TableName: process.env.TABLE_NAME,
+    Key: { PK: { S: `SHORT#${code}` } }
+  }));
+
+  if (!result.Item) {
+    return { statusCode: 404, body: "Short link not found" };
+  }
+
+  return {
+    statusCode: 301,
+    headers: { Location: result.Item.targetUrl.S, "Cache-Control": "public, max-age=86400" }
+  };
+};
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Median Latency</strong>: 11ms globally.</li>
+    <li><strong>Monthly Hosting Cost</strong>: $42.60 for 30,000,000 requests.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Cost Tip:</strong> For microservices that only route or proxy requests, always default to <strong>API Gateway HTTP APIs</strong> rather than REST APIs to save 70% on networking costs.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="serverless-url-shortener"
+    questions={[
+      {
+        question: "Why does adding a Cache-Control: max-age=86400 header to 301 redirects optimize architecture performance?",
+        options: [
+          "It forces DynamoDB to clear old partitions.",
+          "It instructs client browsers and ISP edge proxies to cache the redirect, eliminating subsequent backend requests for repeat clicks.",
+          "It bypasses API Gateway billing.",
+          "It enables AWS X-Ray tracing."
+        ],
+        correctIndex: 1,
+        explanation: "Client-side and intermediate proxy caching absorbs repeat traffic entirely, dropping backend DynamoDB read costs and providing 0ms local redirects."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api.html" target="_blank" rel="noopener">Choosing Between HTTP APIs and REST APIs</a></li>
+  </ul>
+</section>

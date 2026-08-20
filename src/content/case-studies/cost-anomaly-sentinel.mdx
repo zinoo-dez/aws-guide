@@ -1,0 +1,183 @@
+---
+moduleId: "09-observability"
+title: "Cloud Cost Anomaly Sentinel: Autonomous FinOps Waste Hunting"
+summary: "Automatically identifying and remediating orphan EBS volumes, unattached Elastic IPs, and idle development RDS instances using AWS Config and EventBridge."
+difficulty: "Intermediate"
+estimatedMinutes: 7
+industry: "FinOps & Cloud Economics"
+architectureStyle:
+  - "FinOps"
+  - "Autonomous Governance"
+awsServices:
+  - name: "AWS Config"
+    category: "Management"
+    role: "Continuously evaluates resource configuration compliance rules."
+  - name: "AWS Cost Anomaly Detection"
+    category: "Management"
+    role: "Uses machine learning to catch anomalous spend surges per service."
+  - name: "Amazon EventBridge"
+    category: "Serverless"
+    role: "Triggers automated remediation upon non-compliant resource detection."
+  - name: "AWS Lambda"
+    category: "Compute"
+    role: "Snapshots and terminates orphaned cloud resources."
+keyMetrics:
+  - label: "Monthly Waste Eliminated"
+    value: "$4,200/mo"
+    trend: "down"
+  - label: "Orphaned Disks"
+    value: "0"
+    trend: "down"
+  - label: "Compliance Score"
+    value: "99.4%"
+    trend: "up"
+tags:
+  - "finops"
+  - "aws-config"
+  - "eventbridge"
+  - "cost-optimization"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Monthly Idle Waste Saved", value: "$4,200/mo", trend: "down" },
+  { label: "Orphaned Resource MTTR", value: "< 5 mins", trend: "down" },
+  { label: "FinOps Compliance", value: "99.4%", trend: "up" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    An engineering organization with 120 developers noticed their monthly AWS bill creeping up by 15% each month. Developers frequently terminated EC2 test instances while leaving expensive 1TB gp3 EBS volumes attached to nothing, left unassociated Elastic IPs generating hourly fees, and neglected idle staging RDS databases running over long holidays.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Automated Waste Detection</strong>: Identify orphaned EBS volumes and unused IPs within 15 minutes of creation.</li>
+    <li><strong>Safe Remediation</strong>: Snapshot orphaned EBS disks before deletion so no developer data is permanently lost.</li>
+    <li><strong>Developer Notifications</strong>: Send interactive Slack warnings before terminating idle resources.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="Autonomous FinOps Waste Sentinel Architecture"
+    diagram={`graph LR
+    Resource[Developer Deletes EC2 Instance] --> Config[AWS Config Rule: ec2-volume-inuse-check]
+    Config -->|State: NON_COMPLIANT| EB[Amazon EventBridge]
+    
+    EB --> SentinelLambda[FinOps Sentinel Lambda]
+    SentinelLambda -->|1. Create Backup Snapshot| EBS[(EBS Snapshot)]
+    SentinelLambda -->|2. Delete Orphan Volume| DeleteVolume[Delete Unattached Disk]
+    SentinelLambda -->|3. Post Audit Record| Slack[#finops-audit Slack Alert]
+
+    style Config fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
+    style SentinelLambda fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff
+    style EBS fill:#0B101C,stroke:#38BDF8,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "AWS Config Rules",
+      category: "Management",
+      role: "Continuously tracks resource configuration changes and marks unattached disks and idle instances as NON_COMPLIANT."
+    },
+    {
+      name: "Amazon EventBridge",
+      category: "Serverless",
+      role: "Filters AWS Config compliance change events in real time."
+    },
+    {
+      name: "AWS Lambda",
+      category: "Compute",
+      role: "Creates a safety snapshot of the orphan EBS volume and terminates it safely."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Manual Monthly Spreadsheet Audits",
+      pros: ["Zero automation development"],
+      cons: ["High human labor", "Thousands of dollars wasted each month before audits catch leaks"],
+      verdict: "Ineffective for dynamic engineering teams."
+    },
+    {
+      name: "Automated AWS Config + EventBridge Sentinel (Chosen)",
+      isChosen: true,
+      pros: ["Catches waste in 5 minutes", "Safe automated snapshotting before deletion", "Zero ongoing human labor"],
+      cons: ["Requires initial rule authoring"],
+      verdict: "Best-in-class automated cloud financial governance."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="AWS Config Managed Rules for FinOps" badge="Rule Catalog">
+    <ul>
+      <li><code>ec2-volume-inuse-check</code>: Checks whether EBS volumes are attached to running EC2 instances.</li>
+      <li><code>eip-attached</code>: Verifies whether Elastic IP addresses are allocated to active network interfaces.</li>
+      <li><code>rds-instance-public-access-check</code>: Flags databases that have been accidentally made publicly accessible.</li>
+    </ul>
+  </DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>Cost Recovery</strong>: Eliminated <strong>$4,200/month</strong> in zombie cloud infrastructure.</li>
+    <li><strong>Zero Data Loss</strong>: 100% of deleted test disks safely archived in S3/EBS snapshots.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>FinOps Rule:</strong> Automated governance must be proactive. Do not rely on developers remembering to clean up experimental resources; enforce automatic cleanup rules with safety snapshots.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="cost-anomaly-sentinel"
+    questions={[
+      {
+        question: "Why should an automated cleanup script snapshot an unattached EBS volume before deleting it?",
+        options: [
+          "To increase AWS billing.",
+          "To ensure developer data can be recovered within minutes if the unattached disk contained critical uncommitted work.",
+          "Because AWS Config requires snapshots.",
+          "To convert the volume to an AMI."
+        ],
+        correctIndex: 1,
+        explanation: "Snapshotting creates a low-cost S3 backup of the disk blocks, providing a safety net in case an unattached volume was detached accidentally."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config-with-rules.html" target="_blank" rel="noopener">Evaluating Resources with AWS Config Rules</a></li>
+  </ul>
+</section>

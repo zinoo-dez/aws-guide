@@ -1,0 +1,184 @@
+---
+moduleId: "04-databases"
+title: "Global Session Store: Sub-Millisecond Auth with ElastiCache Redis"
+summary: "Architecting a multi-AZ session store supporting 500,000 active users with automatic TTL eviction and sub-millisecond token lookups."
+difficulty: "Intermediate"
+estimatedMinutes: 7
+industry: "Fintech & Security"
+architectureStyle:
+  - "In-Memory Caching"
+  - "High Concurrency"
+awsServices:
+  - name: "Amazon ElastiCache (Redis)"
+    category: "Database"
+    role: "Provides in-memory session token storage and automatic TTL expiration."
+  - name: "Amazon DynamoDB"
+    category: "Database"
+    role: "Acts as cold persistent storage for archived audit sessions."
+  - name: "AWS KMS"
+    category: "Security"
+    role: "Encrypts sensitive session data at rest and in transit via TLS."
+keyMetrics:
+  - label: "Auth Token Lookup"
+    value: "< 0.8ms"
+    trend: "down"
+  - label: "Active Sessions"
+    value: "500,000"
+    trend: "up"
+  - label: "Failover Time"
+    value: "< 15s"
+    trend: "down"
+tags:
+  - "elasticache"
+  - "redis"
+  - "auth"
+  - "sessions"
+featured: false
+order: 2
+---
+
+import ArchitectureDiagram from '../../components/case-study/ArchitectureDiagram.astro';
+import MetricsStrip from '../../components/case-study/MetricsStrip.astro';
+import ServicesMatrix from '../../components/case-study/ServicesMatrix.astro';
+import TradeoffsTable from '../../components/case-study/TradeoffsTable.astro';
+import DeepDiveAccordion from '../../components/case-study/DeepDiveAccordion.astro';
+import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
+
+<MetricsStrip metrics={[
+  { label: "Token Verification Latency", value: "0.8ms", trend: "down" },
+  { label: "Concurrent Sessions", value: "500k+", trend: "up" },
+  { label: "Multi-AZ Failover SLA", value: "< 15s", trend: "down" }
+]} />
+
+<section id="business-problem">
+  <h2>1. Business Problem & Context</h2>
+  <p>
+    A financial services web portal authenticates millions of active users. Every single API request requires validating the user's session token and permissions. Querying relational databases on every HTTP request introduced 40ms of latency per call and saturated database CPU.
+  </p>
+</section>
+
+<section id="requirements-constraints">
+  <h2>2. Requirements & Constraints</h2>
+  <ul>
+    <li><strong>Sub-Millisecond Token Validation</strong>: &lt; 1ms latency for session token checks.</li>
+    <li><strong>Automatic Session Expiry</strong>: Expire idle sessions after 30 minutes using native TTL.</li>
+    <li><strong>High Availability</strong>: Automatic Multi-AZ failover with zero manual intervention.</li>
+  </ul>
+</section>
+
+<section id="architecture-overview">
+  <h2>3. Architecture Overview & Data Flow</h2>
+  
+  <ArchitectureDiagram 
+    title="In-Memory Session Architecture Topology"
+    diagram={`graph TD
+    Client([Authenticated API Request]) --> ALB[Application Load Balancer]
+    ALB --> App[App Service Fleet - Private Subnet]
+    
+    subgraph ElastiCacheCluster [Amazon ElastiCache Redis - Multi-AZ with Auto-Failover]
+        Primary[(Redis Primary Node - AZ A)]
+        Replica1[(Redis Replica Node - AZ B)]
+        Replica2[(Redis Replica Node - AZ C)]
+    end
+
+    App -->|1. Validate Bearer Token < 1ms| Primary
+    Primary -.->|Asynchronous In-Memory Replication| Replica1
+    Primary -.->|Asynchronous In-Memory Replication| Replica2
+
+    style Primary fill:#18223B,stroke:#FB7185,stroke-width:2px,color:#fff
+    style ElastiCacheCluster fill:#0B101C,stroke:#FF9900,stroke-width:1px,color:#fff
+    style App fill:#101728,stroke:#10B981,stroke-width:1px,color:#fff`}
+  />
+</section>
+
+<section id="aws-services">
+  <h2>4. AWS Services Used & Rationales</h2>
+  <ServicesMatrix services={[
+    {
+      name: "Amazon ElastiCache Redis",
+      category: "Database",
+      role: "Delivers sub-millisecond latency for token verification and supports built-in TTL expiration keys."
+    },
+    {
+      name: "AWS KMS",
+      category: "Security",
+      role: "Provides encryption at rest for in-memory snapshots and transit TLS encryption."
+    }
+  ]} />
+</section>
+
+<section id="trade-offs">
+  <h2>5. Key Design Trade-offs</h2>
+  <TradeoffsTable options={[
+    {
+      name: "Relational Database Session Table",
+      pros: ["Zero additional services"],
+      cons: ["High disk I/O", "40ms query overhead", "Database locks during high concurrency"],
+      verdict: "Unsuited for high-throughput authentication."
+    },
+    {
+      name: "ElastiCache Redis Multi-AZ (Chosen)",
+      isChosen: true,
+      pros: ["Sub-millisecond reads", "Native key expiration (TTL)", "Automatic Multi-AZ failover"],
+      cons: ["In-memory data cost"],
+      verdict: "Gold standard for session caching."
+    }
+  ]} />
+</section>
+
+<section id="implementation">
+  <h2>6. Implementation Highlights</h2>
+  <DeepDiveAccordion title="Redis Key Schema with Atomic TTL" badge="Data Design">
+
+```
+# Store session with 1800 second (30 minute) TTL
+SET session:token_9847fae391 '{"user_id": "u_882", "roles": ["admin"], "mfa": true}' EX 1800
+
+# Extend session TTL on active user interaction
+EXPIRE session:token_9847fae391 1800
+```
+
+</DeepDiveAccordion>
+</section>
+
+<section id="results-metrics">
+  <h2>7. Results & Key Metrics</h2>
+  <ul>
+    <li><strong>API Latency</strong>: 38ms overall reduction across all authenticated endpoints.</li>
+    <li><strong>Database Load</strong>: Reduced primary database CPU from 82% to <strong>14%</strong>.</li>
+  </ul>
+</section>
+
+<section id="takeaways">
+  <h2>8. Key Architectural Takeaways</h2>
+  <blockquote>
+    <strong>Session Rule:</strong> Never hit persistent disk databases for request-level authentication checks. Always use in-memory caches like Redis with strict TTL expiration.
+  </blockquote>
+</section>
+
+<section id="quiz">
+  <h2>9. Interactive Knowledge Check</h2>
+  <KnowledgeQuiz 
+    caseStudyId="global-session-management"
+    questions={[
+      {
+        question: "How does Redis Multi-AZ with Auto-Failover handle an Availability Zone outage?",
+        options: [
+          "It prompts the administrator to manually promote a replica.",
+          "It automatically promotes a healthy Read Replica in another AZ to become the new Primary node within 15-30 seconds.",
+          "It restores data from S3 backups.",
+          "It redirects traffic to DynamoDB."
+        ],
+        correctIndex: 1,
+        explanation: "Amazon ElastiCache Redis Multi-AZ monitors cluster health and automatically promotes a read replica in a surviving AZ to primary in the event of an AZ loss."
+      }
+    ]}
+  />
+</section>
+
+<section id="resources">
+  <h2>10. Official AWS References</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/AutoFailover.html" target="_blank" rel="noopener">ElastiCache Redis Multi-AZ and Auto-Failover</a></li>
+  </ul>
+</section>
