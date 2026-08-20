@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from '../ui/ThemeToggle.astro';
+import LanguageToggle from '../ui/LanguageToggle.astro';
 import SearchModal from '../ui/SearchModal.astro';
 ---
 
@@ -15,8 +16,8 @@ import SearchModal from '../ui/SearchModal.astro';
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">AWS Guild</span>
-          <span class="brand-subtitle">Architecture Case Studies</span>
+          <span class="brand-title" data-i18n="nav.brandTitle">AWS Guild</span>
+          <span class="brand-subtitle" data-i18n="nav.brandSubtitle">Architecture Case Studies</span>
         </div>
       </a>
     </div>
@@ -28,7 +29,7 @@ import SearchModal from '../ui/SearchModal.astro';
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <span class="search-placeholder">Search case studies & AWS services...</span>
+        <span class="search-placeholder" data-i18n="nav.searchPlaceholder">Search case studies & AWS services...</span>
         <span class="search-shortcut"><kbd>⌘K</kbd></span>
       </button>
     </div>
@@ -36,11 +37,11 @@ import SearchModal from '../ui/SearchModal.astro';
     <!-- Right Nav & Actions -->
     <div class="header-right">
       <nav class="desktop-nav" aria-label="Primary navigation">
-        <a href="/roadmap" class="nav-link">Roadmap</a>
-        <a href="/modules" class="nav-link">Modules</a>
-        <a href="/case-studies" class="nav-link">Case Studies</a>
-        <a href="/services" class="nav-link">Services</a>
-        <a href="/about" class="nav-link">About</a>
+        <a href="/roadmap" class="nav-link" data-i18n="nav.roadmap">Roadmap</a>
+        <a href="/modules" class="nav-link" data-i18n="nav.modules">Modules</a>
+        <a href="/case-studies" class="nav-link" data-i18n="nav.caseStudies">Case Studies</a>
+        <a href="/services" class="nav-link" data-i18n="nav.services">Services</a>
+        <a href="/about" class="nav-link" data-i18n="nav.about">About</a>
       </nav>
 
       <div class="header-actions">
@@ -52,6 +53,10 @@ import SearchModal from '../ui/SearchModal.astro';
           </svg>
         </button>
 
+        <!-- Language Toggle -->
+        <LanguageToggle />
+
+        <!-- Theme Toggle -->
         <ThemeToggle />
 
         <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="github-btn desktop-only" aria-label="GitHub Repository">
@@ -81,23 +86,23 @@ import SearchModal from '../ui/SearchModal.astro';
     <nav class="mobile-nav" aria-label="Mobile navigation">
       <a href="/roadmap" class="mobile-nav-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-        <span>Learning Roadmap</span>
+        <span data-i18n="nav.roadmap">Learning Roadmap</span>
       </a>
       <a href="/modules" class="mobile-nav-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect></svg>
-        <span>All 11 Modules</span>
+        <span data-i18n="nav.modules">All 11 Modules</span>
       </a>
       <a href="/case-studies" class="mobile-nav-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-        <span>29+ Case Studies</span>
+        <span data-i18n="nav.caseStudies">29+ Case Studies</span>
       </a>
       <a href="/services" class="mobile-nav-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-        <span>AWS Services Index</span>
+        <span data-i18n="nav.services">AWS Services Index</span>
       </a>
       <a href="/about" class="mobile-nav-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        <span>Architecture Methodology</span>
+        <span data-i18n="nav.about">Architecture Methodology</span>
       </a>
     </nav>
   </div>
@@ -392,6 +397,8 @@ import SearchModal from '../ui/SearchModal.astro';
 </style>
 
 <script>
+  import { applyTranslations } from '../../scripts/i18n';
+
   function setupMobileMenu() {
     const btn = document.getElementById('mobile-menu-btn');
     const drawer = document.getElementById('mobile-drawer');
@@ -418,6 +425,8 @@ import SearchModal from '../ui/SearchModal.astro';
         drawer.setAttribute('hidden', '');
       });
     });
+
+    applyTranslations();
   }
 
   setupMobileMenu();

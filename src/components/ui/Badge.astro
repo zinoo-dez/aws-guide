@@ -35,7 +35,10 @@ if (variant === 'difficulty') {
 }
 ---
 
-<span class={`badge ${colorClass} badge-${size} ${className}`}>
+<span 
+  class={`badge ${colorClass} badge-${size} ${className}`}
+  data-i18n={variant === 'difficulty' ? `diff.${typeLower}` : undefined}
+>
   <slot>{type}</slot>
 </span>
 

@@ -17,8 +17,8 @@ const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Ast
 
 <div class="tradeoffs-matrix-card glass-card">
   <div class="tradeoffs-header">
-    <h3>{title}</h3>
-    <p class="tradeoffs-subtitle">Evaluating alternative approaches under real-world constraints</p>
+    <h3 data-i18n="tradeoffs.title">{title}</h3>
+    <p class="tradeoffs-subtitle" data-i18n="tradeoffs.subtitle">Evaluating alternative approaches under real-world constraints</p>
   </div>
 
   <div class="tradeoffs-grid">
@@ -28,14 +28,14 @@ const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Ast
           <div class="tradeoff-title-row">
             <h4 class="option-name">{opt.name}</h4>
             {opt.isChosen && (
-              <span class="chosen-badge">✓ Chosen Design</span>
+              <span class="chosen-badge" data-i18n="tradeoffs.chosenBadge">✓ Chosen Design</span>
             )}
           </div>
         </div>
 
         <div class="tradeoff-card-body">
           <div class="pros-section">
-            <span class="section-label pros-label">Advantages (Pros)</span>
+            <span class="section-label pros-label" data-i18n="tradeoffs.pros">Advantages (Pros)</span>
             <ul class="tradeoff-list">
               {opt.pros.map((pro) => (
                 <li class="pro-item">
@@ -47,7 +47,7 @@ const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Ast
           </div>
 
           <div class="cons-section">
-            <span class="section-label cons-label">Disadvantages (Cons / Trade-offs)</span>
+            <span class="section-label cons-label" data-i18n="tradeoffs.cons">Disadvantages (Cons / Trade-offs)</span>
             <ul class="tradeoff-list">
               {opt.cons.map((con) => (
                 <li class="con-item">
@@ -60,7 +60,7 @@ const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Ast
         </div>
 
         <div class="tradeoff-verdict">
-          <strong>Architectural Verdict:</strong> {opt.verdict}
+          <strong data-i18n="tradeoffs.verdict">Architectural Verdict:</strong> {opt.verdict}
         </div>
       </div>
     ))}

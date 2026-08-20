@@ -82,9 +82,9 @@ const currentSlug = Astro.url.pathname.split('/').filter(Boolean).pop() || '';
     <article class="case-main-col">
       <!-- Breadcrumbs -->
       <nav class="case-breadcrumbs" aria-label="Breadcrumbs">
-        <a href="/">Home</a>
+        <a href="/" data-i18n="case.homeCrumb">Home</a>
         <span class="sep">/</span>
-        <a href="/modules">Modules</a>
+        <a href="/modules" data-i18n="case.modulesCrumb">Modules</a>
         <span class="sep">/</span>
         <a href={`/modules/${moduleId}`}>{moduleTitle || moduleId}</a>
         <span class="sep">/</span>
@@ -110,14 +110,14 @@ const currentSlug = Astro.url.pathname.split('/').filter(Boolean).pop() || '';
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span>Reading Time: <strong>{estimatedMinutes} mins</strong></span>
+            <span><span data-i18n="case.readingTime">Estimated Reading Time:</span> <strong>{estimatedMinutes} <span data-i18n="case.mins">mins</span></strong></span>
           </div>
 
           <div class="meta-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
             </svg>
-            <span>AWS Services: <strong>{awsServices.length} integrated</strong></span>
+            <span><span data-i18n="case.awsServices">AWS Services:</span> <strong>{awsServices.length} <span data-i18n="case.integrated">integrated</span></strong></span>
           </div>
         </div>
       </header>

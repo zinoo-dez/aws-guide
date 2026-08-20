@@ -24,26 +24,24 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     <div class="container hero-inner">
       <div class="hero-badge animate-fade-in">
         <span class="badge-dot"></span>
-        <span>Problem-First AWS System Design Academy</span>
+        <span data-i18n="hero.kicker">Problem-First AWS System Design Academy</span>
       </div>
 
       <h1 class="hero-title animate-fade-in">
-        Stop Memorizing AWS Docs.<br />
-        <span class="gradient-text">Architect Real-World Systems.</span>
+        <span data-i18n="hero.title">Master AWS System Design Through Real-World Architecture Case Studies</span>
       </h1>
 
-      <p class="hero-subtitle animate-fade-in">
-        Official cloud docs list thousands of APIs without explaining <em>why</em> or <em>when</em> to use them. 
-        We teach AWS through <strong>real business problems</strong>, <strong>interactive architecture diagrams</strong>, <strong>trade-off matrices</strong>, and <strong>production-grade cost/SLA metrics</strong>.
+      <p class="hero-subtitle animate-fade-in" data-i18n="hero.subtitle">
+        Deconstruct 29+ real enterprise production architectures. Master AWS services, cost trade-offs, failure recovery modes, and scalability patterns with interactive Mermaid diagrams.
       </p>
 
       <div class="hero-cta-group animate-fade-in">
-        <a href="/roadmap" class="btn btn-primary btn-lg">
-          <span>Explore Learning Roadmap</span>
+        <a href="/case-studies" class="btn btn-primary btn-lg">
+          <span data-i18n="hero.exploreBtn">Explore All 29+ Case Studies</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </a>
-        <a href="/case-studies" class="btn btn-secondary btn-lg">
-          <span>Browse 29+ Case Studies</span>
+        <a href="/roadmap" class="btn btn-secondary btn-lg">
+          <span data-i18n="hero.roadmapBtn">View Learning Roadmap</span>
         </a>
       </div>
 
@@ -51,22 +49,22 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
       <div class="hero-stats-banner glass-card animate-fade-in">
         <div class="stat-box">
           <span class="stat-number">11</span>
-          <span class="stat-label">Core Modules</span>
+          <span class="stat-label" data-i18n="stat.modules">Core Modules</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-box">
           <span class="stat-number">29+</span>
-          <span class="stat-label">Production Case Studies</span>
+          <span class="stat-label" data-i18n="stat.caseStudies">Production Case Studies</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-box">
           <span class="stat-number">45+</span>
-          <span class="stat-label">Interactive Topologies</span>
+          <span class="stat-label" data-i18n="stat.services">AWS Services Covered</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-box">
           <span class="stat-number">100%</span>
-          <span class="stat-label">Free & Open Access</span>
+          <span class="stat-label" data-i18n="stat.diagrams">Mermaid Topologies</span>
         </div>
       </div>
     </div>
@@ -76,9 +74,9 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   <section class="tracks-section">
     <div class="container">
       <div class="section-header-center">
-        <span class="section-kicker">Curated Career Paths</span>
-        <h2 class="section-title">Select Your Architecture Track</h2>
-        <p class="section-subtitle">Follow targeted learning tracks tailored for your engineering role</p>
+        <span class="section-kicker" data-i18n="tracks.kicker">Curated Career Paths</span>
+        <h2 class="section-title" data-i18n="tracks.title">Select Your Architecture Track</h2>
+        <p class="section-subtitle" data-i18n="tracks.subtitle">Follow targeted learning tracks tailored for your engineering role</p>
       </div>
 
       <div class="tracks-grid">
@@ -86,7 +84,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
           <div class="track-icon-box track-icon-orange">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
           </div>
-          <h3 class="track-name">Serverless Architect Track</h3>
+          <h3 class="track-name" data-i18n="tracks.serverless">Serverless Architect Track</h3>
           <p class="track-desc">Master event-driven microservices, Lambda concurrency, DynamoDB single-table design, and API Gateway proxies.</p>
           <div class="track-modules-list">
             <span class="track-badge">Module 1</span>
@@ -94,14 +92,14 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
             <span class="track-badge">Module 4</span>
             <span class="track-badge">Module 10</span>
           </div>
-          <a href="/modules/03-serverless-apps" class="track-link">Start Serverless Track →</a>
+          <a href="/modules/03-serverless-apps" class="track-link" data-i18n="tracks.startServerless">Start Serverless Track →</a>
         </div>
 
         <div class="track-card glass-card">
           <div class="track-icon-box track-icon-cyan">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
           </div>
-          <h3 class="track-name">DevOps & Cloud SRE Track</h3>
+          <h3 class="track-name" data-i18n="tracks.devops">DevOps & Cloud SRE Track</h3>
           <p class="track-desc">Automate zero-downtime GitOps pipelines, blue/green traffic shifting, VPC isolation, and self-healing telemetry.</p>
           <div class="track-modules-list">
             <span class="track-badge">Module 2</span>
@@ -109,14 +107,14 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
             <span class="track-badge">Module 8</span>
             <span class="track-badge">Module 9</span>
           </div>
-          <a href="/modules/08-devops-iac" class="track-link">Start DevOps Track →</a>
+          <a href="/modules/08-devops-iac" class="track-link" data-i18n="tracks.startDevops">Start DevOps Track →</a>
         </div>
 
         <div class="track-card glass-card">
           <div class="track-icon-box track-icon-purple">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
           </div>
-          <h3 class="track-name">Data & Analytics Engineer Track</h3>
+          <h3 class="track-name" data-i18n="tracks.data">Data & Analytics Engineer Track</h3>
           <p class="track-desc">Build real-time Kinesis stream pipelines, S3 Lakehouse partitioning with Glue & Athena, and Redshift datamarts.</p>
           <div class="track-modules-list">
             <span class="track-badge">Module 0</span>
@@ -124,7 +122,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
             <span class="track-badge">Module 6</span>
             <span class="track-badge">Module 10</span>
           </div>
-          <a href="/modules/06-data-analytics" class="track-link">Start Data Track →</a>
+          <a href="/modules/06-data-analytics" class="track-link" data-i18n="tracks.startData">Start Data Track →</a>
         </div>
       </div>
     </div>
@@ -135,11 +133,11 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     <div class="container">
       <div class="section-header-row">
         <div>
-          <span class="section-kicker">Comprehensive Curriculum</span>
-          <h2 class="section-title">All 11 Learning Modules</h2>
+          <span class="section-kicker" data-i18n="modules.kicker">Comprehensive Curriculum</span>
+          <h2 class="section-title" data-i18n="modules.title">All 11 Learning Modules</h2>
         </div>
         <a href="/roadmap" class="btn btn-secondary">
-          <span>View Interactive Roadmap</span>
+          <span data-i18n="hero.roadmapBtn">View Learning Roadmap</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </a>
       </div>

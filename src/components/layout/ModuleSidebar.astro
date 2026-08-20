@@ -29,8 +29,8 @@ const sortedModules = [...allModules].sort((a, b) => a.moduleNumber - b.moduleNu
 
 <aside class="module-sidebar">
   <div class="sidebar-header">
-    <span class="sidebar-title">Curriculum Navigation</span>
-    <span class="sidebar-count">{allModules.length} Modules</span>
+    <span class="sidebar-title" data-i18n="nav.curriculum">Curriculum Navigation</span>
+    <span class="sidebar-count">{allModules.length} <span data-i18n="modules.cases">Modules</span></span>
   </div>
 
   <nav class="sidebar-nav" aria-label="Curriculum Modules">
