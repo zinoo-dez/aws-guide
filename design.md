@@ -1,4 +1,4 @@
-# AWS Architecture Guild – Production-Grade UI & System Design
+# AWS Architecture Guide – Production-Grade UI & System Design
 ## Document: `design.md` (Version: 2.0.0-PROD)
 
 ---
@@ -138,7 +138,7 @@ Key visual principles:
 
 #### 3.1 Global Application Shell
 - **Sticky Glass Navbar** (`height: 64px`, `z-index: 100`):
-  - Brand Logo + AWS Architecture Guild Emblem.
+  - Brand Logo + AWS Architecture Guide Emblem.
   - Search Trigger Pill (`Cmd + K` or `/` icon) opening instantaneous fuzzy overlay.
   - Primary Navigation Links (`Roadmap`, `Modules`, `Case Studies`, `Services Index`).
   - Progress Tracker Widget (e.g. `4 / 32 Completed` with mini radial ring).

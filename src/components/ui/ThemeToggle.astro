@@ -65,7 +65,7 @@
       const newTheme = currentTheme === 'light' ? 'dark' : 'light';
       
       document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('aws-guild-theme', newTheme);
+      localStorage.setItem('aws-guide-theme', newTheme);
       window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
     });
   }

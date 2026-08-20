@@ -2,7 +2,7 @@ import { translations, type SupportedLang } from '../i18n/translations';
 
 export function getStoredLanguage(): SupportedLang {
   if (typeof window === 'undefined') return 'en';
-  const saved = localStorage.getItem('aws-guild-lang') as SupportedLang;
+  const saved = (localStorage.getItem('aws-guide-lang') || localStorage.getItem('aws-guild-lang')) as SupportedLang;
   if (saved && (saved === 'en' || saved === 'my')) {
     return saved;
   }
@@ -11,7 +11,7 @@ export function getStoredLanguage(): SupportedLang {
 
 export function setLanguage(lang: SupportedLang) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('aws-guild-lang', lang);
+  localStorage.setItem('aws-guide-lang', lang);
   document.documentElement.setAttribute('lang', lang);
   document.documentElement.setAttribute('data-lang', lang);
   applyTranslations(lang);

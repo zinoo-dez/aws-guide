@@ -1,8 +1,13 @@
 {
-  "name": "aws-architecture-guild",
+  "name": "aws-architecture-guide",
   "type": "module",
   "version": "1.0.0",
   "description": "Production-Grade AWS Architecture Case Studies and Learning Platform",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zinoo-dez/aws-guide.git"
+  },
+  "homepage": "https://github.com/zinoo-dez/aws-guide",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",

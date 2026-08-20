@@ -1,4 +1,4 @@
-# AWS Architecture Guild – Production Implementation Tasks & Milestones
+# AWS Architecture Guide – Production Implementation Tasks & Milestones
 ## Document: `tasks.md` (Version: 2.0.0-PROD)
 
 ---

@@ -1,4 +1,4 @@
-# AWS Architecture Guild – Production-Grade Technical Requirements
+# AWS Architecture Guide – Production-Grade Technical Requirements
 ## Document: `requirements.md` (Version: 2.0.0-PROD)
 
 ---
@@ -6,7 +6,7 @@
 ### 1. System Vision & Architecture Paradigm
 Cloud documentation is fundamentally reference-heavy: it documents *what* APIs and parameters exist, but routinely misses *why* specific topologies are selected under distinct business constraints, cost boundaries, and reliability thresholds.
 
-**AWS Architecture Guild** is an open-source, ultra-high-performance static architectural repository built on **Astro.js**. It trains engineers and architects using a **First-Principles, Scenario-Driven Architectural Methodology**. Every module and case study models real-world enterprise engineering: dissecting business goals, evaluating trade-offs across the AWS Well-Architected Framework (Reliability, Cost Optimization, Performance Efficiency, Security, Operational Excellence, and Sustainability), providing high-fidelity interactive Mermaid diagrams, and validating design choices with quantitative business metrics.
+**AWS Architecture Guide** is an open-source, ultra-high-performance static architectural repository built on **Astro.js**. It trains engineers and architects using a **First-Principles, Scenario-Driven Architectural Methodology**. Every module and case study models real-world enterprise engineering: dissecting business goals, evaluating trade-offs across the AWS Well-Architected Framework (Reliability, Cost Optimization, Performance Efficiency, Security, Operational Excellence, and Sustainability), providing high-fidelity interactive Mermaid diagrams, and validating design choices with quantitative business metrics.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐

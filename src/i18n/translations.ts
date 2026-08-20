@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     // Navigation & Header
-    'nav.brandTitle': 'AWS Guild',
+    'nav.brandTitle': 'AWS Guide',
     'nav.brandSubtitle': 'Architecture Case Studies',
     'nav.roadmap': 'Roadmap',
     'nav.modules': 'Modules',
@@ -93,7 +93,7 @@ export const translations = {
     'quiz.practitionerTier': '🛡️ Cloud Practitioner Level',
 
     // Search Modal
-    'search.title': 'Search AWS Architecture Guild',
+    'search.title': 'Search AWS Architecture Guide',
     'search.inputPlaceholder': 'Search by title, service (e.g. S3, Lambda), module, or tag...',
     'search.empty': 'No matching architecture case studies found.',
     'search.quickNav': 'Quick Navigation',
@@ -109,12 +109,12 @@ export const translations = {
     'footer.learning': 'Learning',
     'footer.resources': 'Resources',
     'footer.community': 'Community',
-    'footer.copyright': 'AWS Architecture Guild. Built for cloud engineers and architects.'
+    'footer.copyright': 'AWS Architecture Guide. Built for cloud engineers and architects.'
   },
 
   my: {
     // Navigation & Header
-    'nav.brandTitle': 'AWS Guild',
+    'nav.brandTitle': 'AWS Guide',
     'nav.brandSubtitle': 'စနစ်ဒီဇိုင်း လက်တွေ့လေ့လာမှုများ',
     'nav.roadmap': 'လမ်းညွှန်မြေပုံ',
     'nav.modules': 'သင်ခန်းစာများ',
@@ -206,7 +206,7 @@ export const translations = {
     'quiz.practitionerTier': '🛡️ Cloud Practitioner အဆင့်',
 
     // Search Modal
-    'search.title': 'AWS Architecture Guild တွင် ရှာဖွေပါ',
+    'search.title': 'AWS Architecture Guide တွင် ရှာဖွေပါ',
     'search.inputPlaceholder': 'ခေါင်းစဉ်၊ ဝန်ဆောင်မှု (ဥပမာ S3, Lambda) သို့မဟုတ် tag များဖြင့် ရှာဖွေပါ...',
     'search.empty': 'ကိုက်ညီသော Case Study မတွေ့ရှိပါ။',
     'search.quickNav': 'အမြန်သွားရန်',
@@ -222,7 +222,7 @@ export const translations = {
     'footer.learning': 'လေ့လာရန်',
     'footer.resources': 'အရင်းအမြစ်များ',
     'footer.community': 'အသိုက်အဝန်း',
-    'footer.copyright': 'AWS Architecture Guild. Cloud Engineers နှင့် Architects များအတွက် ရည်ရွယ်တည်ဆောက်သည်။'
+    'footer.copyright': 'AWS Architecture Guide. Cloud Engineers နှင့် Architects များအတွက် ရည်ရွယ်တည်ဆောက်သည်။'
   }
 } as const;
 
