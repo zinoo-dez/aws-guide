@@ -4,7 +4,7 @@ import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
-  site: 'https://aws-guild.dev',
+  site: 'https://aws01.vercel.app',
   integrations: [mdx()],
   markdown: {
     shikiConfig: {
