@@ -390,8 +390,35 @@ import SearchModal from '../ui/SearchModal.astro';
   }
 
   @media (max-width: 480px) {
+    .header-inner {
+      gap: 0.25rem;
+      padding-left: var(--space-3);
+      padding-right: var(--space-3);
+    }
+    .brand-title {
+      font-size: 0.95rem;
+    }
     .brand-subtitle {
       display: none;
+    }
+    .logo-icon-wrapper {
+      width: 32px;
+      height: 32px;
+    }
+    .logo-svg {
+      width: 18px;
+      height: 18px;
+    }
+    .header-actions {
+      gap: 0.25rem;
+    }
+    .mobile-search-btn,
+    .mobile-menu-btn,
+    :global(.lang-toggle-btn),
+    :global(.theme-toggle-btn) {
+      width: 34px !important;
+      height: 34px !important;
+      min-width: 34px !important;
     }
   }
 </style>
@@ -399,36 +426,57 @@ import SearchModal from '../ui/SearchModal.astro';
 <script>
   import { applyTranslations } from '../../scripts/i18n';
 
-  function setupMobileMenu() {
-    const btn = document.getElementById('mobile-menu-btn');
-    const drawer = document.getElementById('mobile-drawer');
-    if (!btn || !drawer) return;
+  if (typeof window !== 'undefined') {
+    // Robust document-level event delegation
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      const menuBtn = target?.closest('#mobile-menu-btn');
+      const drawer = document.getElementById('mobile-drawer');
+      const navLink = target?.closest('.mobile-nav-link');
 
-    btn.addEventListener('click', () => {
-      const isOpen = btn.classList.contains('is-open');
-      if (isOpen) {
-        btn.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
+      if (menuBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = menuBtn.classList.contains('is-open');
+        if (isOpen) {
+          menuBtn.classList.remove('is-open');
+          menuBtn.setAttribute('aria-expanded', 'false');
+          drawer?.setAttribute('hidden', '');
+        } else {
+          menuBtn.classList.add('is-open');
+          menuBtn.setAttribute('aria-expanded', 'true');
+          drawer?.removeAttribute('hidden');
+        }
+        return;
+      }
+
+      // Close drawer when clicking any link inside it
+      if (navLink) {
+        const btn = document.getElementById('mobile-menu-btn');
+        btn?.classList.remove('is-open');
+        btn?.setAttribute('aria-expanded', 'false');
+        drawer?.setAttribute('hidden', '');
+        return;
+      }
+
+      // Close drawer when clicking outside the header / drawer
+      if (drawer && !drawer.hasAttribute('hidden') && !target?.closest('.site-header')) {
+        const btn = document.getElementById('mobile-menu-btn');
+        btn?.classList.remove('is-open');
+        btn?.setAttribute('aria-expanded', 'false');
         drawer.setAttribute('hidden', '');
-      } else {
-        btn.classList.add('is-open');
-        btn.setAttribute('aria-expanded', 'true');
-        drawer.removeAttribute('hidden');
       }
     });
 
-    // Close when clicking a link
-    drawer.querySelectorAll('a').forEach((link) => {
-      link.addEventListener('click', () => {
-        btn.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
-        drawer.setAttribute('hidden', '');
-      });
-    });
-
     applyTranslations();
+    document.addEventListener('astro:page-load', () => {
+      applyTranslations();
+      // Ensure drawer is closed on fresh view transitions
+      const btn = document.getElementById('mobile-menu-btn');
+      const drawer = document.getElementById('mobile-drawer');
+      btn?.classList.remove('is-open');
+      btn?.setAttribute('aria-expanded', 'false');
+      drawer?.setAttribute('hidden', '');
+    });
   }
-
-  setupMobileMenu();
-  document.addEventListener('astro:page-load', setupMobileMenu);
 </script>

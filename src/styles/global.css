@@ -477,6 +477,13 @@ blockquote strong {
   padding: 0 var(--space-6);
 }
 
+@media (max-width: 640px) {
+  .container,
+  .container-narrow {
+    padding: 0 var(--space-4);
+  }
+}
+
 /* Glass Card */
 .glass-card {
   background: var(--glass-bg);
