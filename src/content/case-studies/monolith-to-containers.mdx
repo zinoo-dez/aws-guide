@@ -77,17 +77,17 @@ import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
     diagram={`graph TD
     Client([Public API Traffic]) --> ALB[Application Load Balancer]
     
-    subgraph RoutingRules [ALB Path-Based Routing]
-        ALB -->|Default /* (Legacy)| LegacyMonolith[Legacy Monolith EC2 ASG]
-        ALB -->|/api/auth/* (Migrated)| AuthFargate[Auth Microservice - Fargate Task]
-        ALB -->|/api/payments/* (Migrated)| PayFargate[Payment Microservice - Fargate Task]
-        ALB -->|/api/notifications/*| NotifFargate[Notification Microservice - Fargate Task]
+    subgraph RoutingRules ["ALB Path-Based Routing"]
+        ALB -->|"Default /* (Legacy)"| LegacyMonolith[Legacy Monolith EC2 ASG]
+        ALB -->|"/api/auth/* (Migrated)"| AuthFargate[Auth Microservice - Fargate Task]
+        ALB -->|"/api/payments/* (Migrated)"| PayFargate[Payment Microservice - Fargate Task]
+        ALB -->|"/api/notifications/*"| NotifFargate[Notification Microservice - Fargate Task]
     end
 
-    ECR[(Amazon ECR Container Registry)] -.->|Pull Images| AuthFargate
-    ECR -.->|Pull Images| PayFargate
+    ECR[(Amazon ECR Container Registry)] -.->|"Pull Images"| AuthFargate
+    ECR -.->|"Pull Images"| PayFargate
     
-    CloudMap[AWS Cloud Map Private DNS] -.->|Internal Service Discovery| PayFargate
+    CloudMap[AWS Cloud Map Private DNS] -.->|"Service Discovery"| PayFargate
 
     style ALB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
     style AuthFargate fill:#101728,stroke:#06B6D4,stroke-width:1px,color:#fff

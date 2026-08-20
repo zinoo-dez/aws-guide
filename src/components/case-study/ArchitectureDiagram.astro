@@ -39,8 +39,11 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
 
   <!-- Diagram Canvas Area -->
   <div class="diagram-viewport">
-    <div class="mermaid-target mermaid" data-raw={diagram}>
-      {diagram}
+    <div class="mermaid-target" data-raw={diagram}>
+      <div class="diagram-loading-placeholder">
+        <div class="diagram-spinner"></div>
+        <span>Rendering Architecture Topology...</span>
+      </div>
     </div>
   </div>
 
@@ -111,7 +114,7 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
 
   .diagram-viewport {
     position: relative;
-    min-height: 280px;
+    min-height: 300px;
     padding: var(--space-6);
     display: flex;
     align-items: center;
@@ -133,9 +136,34 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
     justify-content: center;
   }
 
-  :global(.mermaid svg) {
+  :global(.mermaid-target svg) {
     max-width: 100% !important;
     height: auto !important;
+    min-height: 200px;
+  }
+
+  .diagram-loading-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-8);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .diagram-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-medium);
+    border-top-color: var(--aws-orange);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .diagram-caption {
@@ -150,66 +178,105 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
 </style>
 
 <script>
-  async function initMermaid() {
-    if (typeof window === 'undefined') return;
+  let mermaidLoadedPromise: Promise<any> | null = null;
 
-    if (!(window as any).mermaid) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
-      script.onload = () => {
-        setupMermaidInstances();
-      };
-      document.head.appendChild(script);
-    } else {
-      setupMermaidInstances();
+  function loadMermaidScript(): Promise<any> {
+    if (typeof window === 'undefined') return Promise.reject();
+    if ((window as any).mermaid) {
+      return Promise.resolve((window as any).mermaid);
     }
-  }
+    if (mermaidLoadedPromise) {
+      return mermaidLoadedPromise;
+    }
 
-  function setupMermaidInstances() {
-    const mermaid = (window as any).mermaid;
-    if (!mermaid) return;
-
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: isLight ? 'default' : 'dark',
-      themeVariables: {
-        fontFamily: 'Inter, system-ui, sans-serif',
-        primaryColor: isLight ? '#FFFBEB' : '#18223B',
-        primaryTextColor: isLight ? '#0F172A' : '#F1F5F9',
-        primaryBorderColor: isLight ? '#EA580C' : '#FF9900',
-        lineColor: isLight ? '#0284C7' : '#38BDF8',
-        secondaryColor: isLight ? '#F8FAFC' : '#101728',
-        tertiaryColor: isLight ? '#FFFFFF' : '#0B101C',
-        background: 'transparent',
-        nodeTextColor: isLight ? '#0F172A' : '#F1F5F9',
-        mainBkg: isLight ? '#FFFFFF' : '#18223B',
-        nodeBorder: isLight ? '#CBD5E1' : '#38BDF8',
-        clusterBkg: isLight ? '#F8FAFC' : '#0B101C',
-        clusterBorder: isLight ? '#E2E8F0' : '#1E2A4A',
-        edgeLabelBackground: isLight ? '#FFFFFF' : '#101728',
-      },
-      securityLevel: 'loose',
+    mermaidLoadedPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
+      script.onload = () => {
+        resolve((window as any).mermaid);
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
     });
 
-    document.querySelectorAll('.mermaid-target').forEach(async (el) => {
-      const raw = el.getAttribute('data-raw');
-      if (raw) {
-        el.removeAttribute('data-rendered');
-        const id = 'mermaid-' + Math.random().toString(36).substring(2, 9);
+    return mermaidLoadedPromise;
+  }
+
+  function cleanMermaidCode(raw: string): string {
+    return raw
+      .replace(/→/g, '-->')
+      .replace(/-\.→/g, '-.->')
+      .replace(/←/g, '<--')
+      .replace(/↔/g, '<-->')
+      .trim();
+  }
+
+  async function renderAllDiagrams() {
+    const targets = document.querySelectorAll('.mermaid-target');
+    if (targets.length === 0) return;
+
+    try {
+      const mermaid = await loadMermaidScript();
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: isLight ? 'default' : 'dark',
+        themeVariables: {
+          fontFamily: 'Inter, system-ui, sans-serif',
+          primaryColor: isLight ? '#FFFBEB' : '#18223B',
+          primaryTextColor: isLight ? '#0F172A' : '#F1F5F9',
+          primaryBorderColor: isLight ? '#EA580C' : '#FF9900',
+          lineColor: isLight ? '#0284C7' : '#38BDF8',
+          secondaryColor: isLight ? '#F8FAFC' : '#101728',
+          tertiaryColor: isLight ? '#FFFFFF' : '#0B101C',
+          background: 'transparent',
+          nodeTextColor: isLight ? '#0F172A' : '#F1F5F9',
+          mainBkg: isLight ? '#FFFFFF' : '#18223B',
+          nodeBorder: isLight ? '#CBD5E1' : '#38BDF8',
+          clusterBkg: isLight ? '#F8FAFC' : '#0B101C',
+          clusterBorder: isLight ? '#E2E8F0' : '#1E2A4A',
+          edgeLabelBackground: isLight ? '#FFFFFF' : '#101728',
+        },
+        securityLevel: 'loose',
+      });
+
+      targets.forEach(async (el, index) => {
+        const raw = el.getAttribute('data-raw');
+        if (!raw) return;
+
+        const cleanCode = cleanMermaidCode(raw);
+        const uniqueId = `mermaid_svg_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`;
+        
         try {
-          const { svg } = await mermaid.render(id, raw);
+          const { svg } = await mermaid.render(uniqueId, cleanCode);
           el.innerHTML = svg;
           el.setAttribute('data-rendered', 'true');
         } catch (err) {
-          console.error('Mermaid render error:', err);
+          console.warn('Mermaid render issue:', err);
+          // Fallback attempt: Wrap unquoted labels
+          try {
+            const fallbackCode = cleanCode
+              .replace(/-->\|([^"]*?)\|/g, (match, p1) => `-->|"${p1.trim()}"|`)
+              .replace(/-\.->\|([^"]*?)\|/g, (match, p1) => `-.->|"${p1.trim()}"|`);
+            const { svg } = await mermaid.render(uniqueId + '_fb', fallbackCode);
+            el.innerHTML = svg;
+            el.setAttribute('data-rendered', 'true');
+          } catch (fbErr) {
+            console.error('Mermaid fallback failed:', fbErr);
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.error('Failed to load Mermaid:', e);
+    }
+  }
 
-    // Setup interactive zoom / pan on each diagram
+  function setupDiagramControls() {
     document.querySelectorAll('.architecture-diagram-card').forEach((card) => {
+      if (card.getAttribute('data-controls-bound')) return;
+      card.setAttribute('data-controls-bound', 'true');
+
       const target = card.querySelector('.mermaid-target') as HTMLElement;
       if (!target) return;
 
@@ -236,7 +303,7 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
 
       copyBtn?.addEventListener('click', () => {
         const raw = target.getAttribute('data-raw') || '';
-        navigator.clipboard.writeText(raw).then(() => {
+        navigator.clipboard.writeText(cleanMermaidCode(raw)).then(() => {
           const textSpan = copyBtn.querySelector('.btn-text');
           if (textSpan) {
             textSpan.textContent = 'Copied!';
@@ -247,9 +314,12 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
     });
   }
 
-  initMermaid();
-  document.addEventListener('astro:page-load', initMermaid);
-  window.addEventListener('theme-changed', () => {
-    setupMermaidInstances();
-  });
+  function init() {
+    renderAllDiagrams();
+    setupDiagramControls();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+  window.addEventListener('theme-changed', renderAllDiagrams);
 </script>

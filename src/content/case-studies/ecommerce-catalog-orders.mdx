@@ -79,8 +79,8 @@ import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
         CheckoutLambda[Checkout & Payment Lambda]
     end
 
-    APIGW -->|GET /products/*| CatalogLambda
-    APIGW -->|POST /orders/checkout| CheckoutLambda
+    APIGW -->|"GET /products/*"| CatalogLambda
+    APIGW -->|"POST /orders/checkout"| CheckoutLambda
 
     subgraph DataStorageTier [Polyglot Storage]
         DDB[(Amazon DynamoDB: Product Catalog)]
@@ -88,9 +88,9 @@ import KnowledgeQuiz from '../../components/case-study/KnowledgeQuiz.astro';
         Aurora[(Aurora Serverless v2 PostgreSQL)]
     end
 
-    CatalogLambda -->|GetItem / Query Single-Digit ms| DDB
-    CheckoutLambda -->|Pooled Connection| Proxy
-    Proxy -->|ACID Transaction Write| Aurora
+    CatalogLambda -->|"GetItem / Query Sub-10ms"| DDB
+    CheckoutLambda -->|"Pooled Connection"| Proxy
+    Proxy -->|"ACID Transaction Write"| Aurora
 
     style DDB fill:#18223B,stroke:#FF9900,stroke-width:2px,color:#fff
     style Aurora fill:#0B101C,stroke:#38BDF8,stroke-width:2px,color:#fff
