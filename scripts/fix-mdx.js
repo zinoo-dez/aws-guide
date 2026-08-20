@@ -12,7 +12,7 @@ for (const file of files) {
   // e.g. <DeepDiveAccordion title="..." badge="...">\n  <pre><code>CODE</code></pre>\n</DeepDiveAccordion>
   content = content.replace(
     /<DeepDiveAccordion([^>]*)>\s*<pre><code>([\s\S]*?)<\/code><\/pre>\s*<\/DeepDiveAccordion>/g,
-    (match, attrs, code) => {
+    (_, attrs, code) => {
       // Decode HTML entities if any
       const cleanCode = code
         .replace(/&amp;/g, '&')
@@ -27,7 +27,7 @@ for (const file of files) {
   // In case there are other <pre><code> tags
   content = content.replace(
     /<pre><code>([\s\S]*?)<\/code><\/pre>/g,
-    (match, code) => {
+    (_, code) => {
       const cleanCode = code
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')

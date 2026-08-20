@@ -109,7 +109,19 @@ export const translations = {
     'footer.learning': 'Learning',
     'footer.resources': 'Resources',
     'footer.community': 'Community',
-    'footer.copyright': 'AWS Architecture Guide. Built for cloud engineers and architects.'
+    'footer.copyright': 'AWS Architecture Guide. Built for cloud engineers and architects.',
+
+    // PWA & Desktop App Install
+    'pwa.installTitle': 'Install AWS Guide Desktop App',
+    'pwa.installSubtitle': 'Create a desktop shortcut for instant, distraction-free access with offline case studies and global ⌘K search.',
+    'pwa.badge': 'Desktop App',
+    'pwa.offlineFeature': 'Instant Offline Access',
+    'pwa.standaloneFeature': 'Dedicated Window',
+    'pwa.speedFeature': 'Zero Latency',
+    'pwa.installBtn': 'Install App',
+    'pwa.dismissBtn': 'Maybe Later',
+    'pwa.installedToast': 'AWS Guide installed successfully!',
+    'pwa.safariTip': 'To install: Click Share ⎙ or browser menu and select "Add to Dock" or "Install App"'
   },
 
   my: {
@@ -222,7 +234,19 @@ export const translations = {
     'footer.learning': 'လေ့လာရန်',
     'footer.resources': 'အရင်းအမြစ်များ',
     'footer.community': 'အသိုက်အဝန်း',
-    'footer.copyright': 'AWS Architecture Guide. Cloud Engineers နှင့် Architects များအတွက် ရည်ရွယ်တည်ဆောက်သည်။'
+    'footer.copyright': 'AWS Architecture Guide. Cloud Engineers နှင့် Architects များအတွက် ရည်ရွယ်တည်ဆောက်သည်။',
+
+    // PWA & Desktop App Install
+    'pwa.installTitle': 'AWS Guide Desktop App ထည့်သွင်းမည်',
+    'pwa.installSubtitle': 'Desktop Shortcut ပြုလုပ်၍ အင်တာနက်မရှိချိန်တွင်လည်း Case Studies များကို လျင်မြန်စွာ လေ့လာနိုင်ပါသည်။',
+    'pwa.badge': 'Desktop အက်ပ်',
+    'pwa.offlineFeature': 'အင်တာနက်မလိုဘဲ အသုံးပြုနိုင်ခြင်း',
+    'pwa.standaloneFeature': 'သီးသန့် App Window ဖြင့် အသုံးပြုနိုင်ခြင်း',
+    'pwa.speedFeature': 'ချက်ချင်းဖွင့်လှစ်နိုင်ခြင်း',
+    'pwa.installBtn': 'အက်ပ် ထည့်သွင်းမည်',
+    'pwa.dismissBtn': 'နောက်မှ ပြုလုပ်မည်',
+    'pwa.installedToast': 'AWS Guide အက်ပ်ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ!',
+    'pwa.safariTip': 'ထည့်သွင်းရန်: Browser Menu သို့မဟုတ် Share မှတစ်ဆင့် "Add to Dock / Install" ကို ရွေးချယ်ပါ'
   }
 } as const;
 

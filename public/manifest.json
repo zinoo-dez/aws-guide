@@ -1,0 +1,98 @@
+{
+  "id": "/?source=pwa",
+  "name": "AWS Architecture Guide – System Design & Case Studies",
+  "short_name": "AWS Guide",
+  "description": "Master AWS cloud architecture through 29+ real-world production case studies, trade-offs, and interactive system topologies.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0B0F19",
+  "theme_color": "#FF9900",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Visual Learning Roadmap",
+      "short_name": "Roadmap",
+      "description": "Step-by-step master curriculum progression",
+      "url": "/roadmap?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "All 11 Learning Modules",
+      "short_name": "Modules",
+      "description": "Foundations to Advanced Enterprise Capstones",
+      "url": "/modules?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "29+ Production Case Studies",
+      "short_name": "Case Studies",
+      "description": "Real-world cloud architecture blueprints",
+      "url": "/case-studies?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "AWS Services Index",
+      "short_name": "Services",
+      "description": "Reference matrix connecting services to architectures",
+      "url": "/services?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

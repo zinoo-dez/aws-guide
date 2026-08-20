@@ -257,8 +257,8 @@ const { diagram, title = 'Architecture Topology', caption = 'Interactive Archite
           // Fallback attempt: Wrap unquoted labels
           try {
             const fallbackCode = cleanCode
-              .replace(/-->\|([^"]*?)\|/g, (match, p1) => `-->|"${p1.trim()}"|`)
-              .replace(/-\.->\|([^"]*?)\|/g, (match, p1) => `-.->|"${p1.trim()}"|`);
+              .replace(/-->\|([^"]*?)\|/g, (_, p1) => `-->|"${p1.trim()}"|`)
+              .replace(/-\.->\|([^"]*?)\|/g, (_, p1) => `-.->|"${p1.trim()}"|`);
             const { svg } = await mermaid.render(uniqueId + '_fb', fallbackCode);
             el.innerHTML = svg;
             el.setAttribute('data-rendered', 'true');

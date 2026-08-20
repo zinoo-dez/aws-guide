@@ -1,6 +1,7 @@
 ---
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+import PwaInstallPrompt from '../components/ui/PwaInstallPrompt.astro';
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import '../styles/animations.css';
@@ -31,6 +32,17 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guid
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
     <ClientRouter />
+
+    <!-- PWA Manifest & App Metas -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0B0F19" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AWS Guide" />
+    <meta name="application-name" content="AWS Guide" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -96,6 +108,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guid
       <slot />
     </main>
     <Footer />
+    <PwaInstallPrompt />
 
     <script>
       import { applyTranslations } from '../scripts/i18n';
@@ -120,9 +133,26 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guid
         });
       }
 
-      // Auto-apply translations & scroll observer
+      // Register PWA Service Worker
+      function registerPwaServiceWorker() {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker
+              .register('/sw.js')
+              .then((reg) => {
+                console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
+              })
+              .catch((err) => {
+                console.warn('[PWA] ServiceWorker registration error:', err);
+              });
+          });
+        }
+      }
+
+      // Auto-apply translations, scroll observer & service worker
       applyTranslations();
       initScrollReveals();
+      registerPwaServiceWorker();
 
       document.addEventListener('astro:page-load', () => {
         applyTranslations();

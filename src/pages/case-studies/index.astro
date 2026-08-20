@@ -1,19 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Badge from '../../components/ui/Badge.astro';
 import CaseStudyCard from '../../components/case-study/CaseStudyCard.astro';
 import { getCollection } from 'astro:content';
 
 const caseStudies = await getCollection('caseStudies');
 const sortedCaseStudies = [...caseStudies].sort((a, b) => a.data.order - b.data.order);
 
-// Collect unique categories and architecture styles
+// Collect unique categories
 const allCategories = Array.from(
   new Set(caseStudies.flatMap(cs => cs.data.awsServices.map(s => s.category)))
-).sort();
-
-const allStyles = Array.from(
-  new Set(caseStudies.flatMap(cs => cs.data.architectureStyle))
 ).sort();
 ---
 
