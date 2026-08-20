@@ -104,31 +104,19 @@
       return;
     }
 
-    // Capture install prompt event
+    // Show banner only when beforeinstallprompt event is fired and not dismissed
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
       (window as any).deferredPwaPrompt = e;
 
-      // Show banner if not recently dismissed in this session
       const dismissed = sessionStorage.getItem(DISMISS_KEY);
       if (!dismissed) {
         setTimeout(() => {
           showBanner();
-        }, 1200);
+        }, 2000);
       }
     });
-
-    // Check if browser does not fire beforeinstallprompt (like macOS Safari)
-    // but user hasn't installed or dismissed yet
-    const hasDismissed = sessionStorage.getItem(DISMISS_KEY);
-    if (!hasDismissed && !isStandaloneMode()) {
-      setTimeout(() => {
-        if (!isStandaloneMode() && !sessionStorage.getItem(DISMISS_KEY)) {
-          showBanner();
-        }
-      }, 1800);
-    }
 
     function showBanner() {
       if (banner && !isStandaloneMode()) {
@@ -162,7 +150,6 @@
         deferredPrompt = null;
         (window as any).deferredPwaPrompt = null;
       } else {
-        // Show manual instruction if browser doesn't support programmatic prompt (e.g. Safari)
         if (manualTip) {
           manualTip.hidden = false;
           manualTip.classList.add('animate-fade-in');
@@ -173,7 +160,7 @@
     dismissBtn?.addEventListener('click', () => hideBanner(true));
     closeBtn?.addEventListener('click', () => hideBanner(true));
 
-    // Global listener to trigger install prompt from header or anywhere in UI
+    // Global listener to trigger install prompt from drawer or anywhere in UI
     window.addEventListener('open-pwa-install', () => {
       showBanner();
     });
@@ -228,13 +215,12 @@
   .pwa-banner-card {
     position: relative;
     padding: var(--space-5);
-    background: rgba(11, 15, 25, 0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 153, 0, 0.4);
+    background: var(--bg-surface-1);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--aws-orange-border);
     border-radius: var(--radius-xl);
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7),
-                0 0 32px rgba(255, 153, 0, 0.15);
+    box-shadow: var(--shadow-lg), 0 0 28px var(--aws-orange-bg);
   }
 
   .pwa-close-btn {
@@ -246,16 +232,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-medium);
     border-radius: 50%;
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.2s ease;
+    z-index: 5;
   }
 
   .pwa-close-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--bg-surface-hover);
     color: var(--text-primary);
   }
 
@@ -275,11 +262,11 @@
   }
 
   .pwa-app-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 4px 16px rgba(255, 153, 0, 0.3);
-    border: 1px solid rgba(255, 153, 0, 0.4);
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 14px var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
   }
 
   .pwa-badge {
@@ -288,27 +275,28 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 2px 6px;
-    background: rgba(255, 153, 0, 0.15);
+    background: var(--aws-orange-bg);
     color: var(--aws-orange);
-    border-radius: 999px;
-    border: 1px solid rgba(255, 153, 0, 0.3);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--aws-orange-border);
   }
 
   .pwa-info {
     flex: 1;
     min-width: 0;
+    padding-right: var(--space-5);
   }
 
   .pwa-title {
     font-size: var(--text-base);
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--text-display);
     margin-bottom: 4px;
     line-height: 1.3;
   }
 
   .pwa-subtitle {
-    font-size: var(--text-xs);
+    font-size: 0.8rem;
     color: var(--text-secondary);
     line-height: 1.5;
     margin-bottom: var(--space-3);
@@ -327,14 +315,14 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--bg-surface-2);
     border: 1px solid var(--border-subtle);
     padding: 2px 8px;
     border-radius: var(--radius-full);
   }
 
   .pwa-pill svg {
-    color: var(--color-success);
+    color: var(--cat-compute);
   }
 
   .pwa-manual-tip {
@@ -343,11 +331,11 @@
     gap: 6px;
     padding: 8px 12px;
     margin-bottom: var(--space-3);
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.25);
+    background: var(--aws-orange-bg);
+    border: 1px solid var(--aws-orange-border);
     border-radius: var(--radius-md);
     font-size: var(--text-xs);
-    color: #38BDF8;
+    color: var(--text-primary);
     line-height: 1.4;
   }
 
@@ -363,13 +351,13 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 9px 16px;
     font-size: var(--text-sm);
     font-weight: 700;
   }
 
   .pwa-dismiss-action {
-    padding: 10px 14px;
+    padding: 9px 14px;
     font-size: var(--text-xs);
     font-weight: 600;
     color: var(--text-muted);
@@ -391,9 +379,9 @@
     gap: var(--space-3);
     padding: 12px 20px;
     border-radius: var(--radius-full);
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    background: rgba(8, 12, 20, 0.95);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--cat-compute-border);
+    background: var(--bg-surface-1);
+    box-shadow: var(--shadow-lg);
     font-size: var(--text-sm);
     font-weight: 600;
     color: var(--text-primary);
@@ -420,6 +408,39 @@
       left: var(--space-3);
       width: auto;
       max-width: 100%;
+    }
+    .pwa-banner-card {
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+    }
+    .pwa-app-icon {
+      width: 38px;
+      height: 38px;
+    }
+    .pwa-title {
+      font-size: 0.925rem;
+    }
+    .pwa-subtitle {
+      font-size: 0.775rem;
+      margin-bottom: var(--space-2);
+    }
+    .pwa-features {
+      display: none;
+    }
+    .pwa-content-row {
+      margin-bottom: var(--space-3);
+      gap: var(--space-3);
+    }
+    .pwa-actions {
+      gap: var(--space-2);
+    }
+    .pwa-install-action {
+      padding: 8px 12px;
+      font-size: 0.8rem;
+    }
+    .pwa-dismiss-action {
+      padding: 8px 10px;
+      font-size: 0.75rem;
     }
   }
 </style>

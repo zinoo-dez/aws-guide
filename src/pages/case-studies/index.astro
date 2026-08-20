@@ -252,12 +252,14 @@ const allCategories = Array.from(
   /* Catalog Grid */
   .catalog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-6);
   }
 
   .catalog-card-wrapper {
     display: flex;
+    min-width: 0;
+    width: 100%;
   }
 
   .catalog-card-wrapper[hidden] {
@@ -278,6 +280,33 @@ const allCategories = Array.from(
   .no-results-box p {
     color: var(--text-secondary);
     margin-bottom: var(--space-6);
+  }
+
+  @media (max-width: 640px) {
+    .catalog-page {
+      padding-top: var(--space-6);
+      padding-bottom: var(--space-10);
+    }
+    .filters-toolbar {
+      padding: var(--space-4);
+    }
+    .toolbar-search-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-2);
+    }
+    .results-counter {
+      text-align: right;
+    }
+    .catalog-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+    .filter-label {
+      min-width: auto;
+      width: 100%;
+      margin-bottom: 2px;
+    }
   }
 </style>
 

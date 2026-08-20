@@ -33,6 +33,24 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://aws-guid
     <meta name="generator" content={Astro.generator} />
     <ClientRouter />
 
+    <!-- Preconnect & Asynchronous Fonts (Non-Blocking for fast Mobile FCP & LCP) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link 
+      rel="preload" 
+      as="style" 
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" 
+    />
+    <link 
+      rel="stylesheet" 
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" 
+      media="print" 
+      onload="this.media='all'" 
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
+    </noscript>
+
     <!-- PWA Manifest & App Metas -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0B0F19" />

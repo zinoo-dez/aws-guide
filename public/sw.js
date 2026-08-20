@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aws-guide-v1.0.1';
+const CACHE_NAME = 'aws-guide-v1.0.2';
 const STATIC_CACHE = `${CACHE_NAME}-static`;
 const RUNTIME_CACHE = `${CACHE_NAME}-runtime`;
 
@@ -57,27 +57,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. Navigation Requests (HTML Pages): Network-First with Offline Fallback
+  // 1. Navigation Requests (HTML Pages): Stale-While-Revalidate for sub-second mobile page loads
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(async () => {
-          const cachedResponse = await caches.match(request);
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          const offlineFallback = await caches.match('/offline.html');
-          return offlineFallback || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
-        })
+      (async () => {
+        const cache = await caches.open(RUNTIME_CACHE);
+        const cachedResponse = await cache.match(request);
+
+        const networkFetch = fetch(request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(async () => {
+            if (cachedResponse) return cachedResponse;
+            const offlineFallback = await caches.match('/offline.html');
+            return offlineFallback || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+          });
+
+        return cachedResponse || networkFetch;
+      })()
     );
     return;
   }

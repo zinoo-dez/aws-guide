@@ -6,6 +6,10 @@ export default defineConfig({
   output: 'static',
   site: 'https://aws01.vercel.app',
   integrations: [mdx()],
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'viewport',
+  },
   markdown: {
     shikiConfig: {
       theme: 'github-dark-dimmed',

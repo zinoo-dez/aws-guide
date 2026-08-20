@@ -15,9 +15,11 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   title="AWS Architecture Guide | Real-World System Design Case Studies"
   description="Master AWS cloud system design through 11 modules and 29+ real-world production case studies, interactive Mermaid architecture diagrams, trade-off matrices, and retention quizzes."
 >
-  <!-- Ambient background lighting -->
-  <div class="ambient-orb ambient-orb-orange" style="top: 10%; left: 15%; width: 500px; height: 500px;"></div>
-  <div class="ambient-orb ambient-orb-blue" style="top: 30%; right: 10%; width: 450px; height: 450px;"></div>
+  <!-- Ambient background lighting (bounded to prevent viewport overflow) -->
+  <div class="ambient-orbs-container" aria-hidden="true">
+    <div class="ambient-orb ambient-orb-orange" style="top: 8%; left: 10%; width: 450px; height: 450px;"></div>
+    <div class="ambient-orb ambient-orb-blue" style="top: 28%; right: 5%; width: 400px; height: 400px;"></div>
+  </div>
 
   <!-- Hero Section -->
   <section class="hero-section">
@@ -236,6 +238,18 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
 </BaseLayout>
 
 <style>
+  .ambient-orbs-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   /* Hero */
   .hero-section {
     position: relative;
@@ -248,6 +262,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     position: relative;
     z-index: 10;
     max-width: 920px;
+    min-width: 0;
   }
 
   .hero-badge {
@@ -273,12 +288,13 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   }
 
   .hero-title {
-    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-size: clamp(2rem, 5vw, 3.8rem);
     font-weight: 800;
     color: var(--text-display);
     line-height: 1.15;
     margin-bottom: var(--space-6);
     letter-spacing: -0.03em;
+    word-break: break-word;
   }
 
   .gradient-text {
@@ -288,13 +304,14 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   }
 
   .hero-subtitle {
-    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    font-size: clamp(1rem, 2vw, 1.25rem);
     color: var(--text-secondary);
     line-height: 1.65;
     margin-bottom: var(--space-8);
     max-width: 760px;
     margin-left: auto;
     margin-right: auto;
+    word-break: break-word;
   }
 
   .hero-cta-group {
@@ -321,6 +338,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     border-radius: var(--radius-xl);
     flex-wrap: wrap;
     gap: var(--space-4);
+    min-width: 0;
   }
 
   .stat-box {
@@ -364,20 +382,23 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   }
 
   .section-title {
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
     color: var(--text-display);
+    word-break: break-word;
   }
 
   .section-subtitle {
     font-size: 1rem;
     color: var(--text-secondary);
     margin-top: 0.25rem;
+    word-break: break-word;
   }
 
   .section-header-center {
     text-align: center;
     max-width: 640px;
     margin: 0 auto var(--space-10);
+    min-width: 0;
   }
 
   .section-header-row {
@@ -387,6 +408,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     margin-bottom: var(--space-8);
     gap: var(--space-4);
     flex-wrap: wrap;
+    min-width: 0;
   }
 
   /* Career Tracks */
@@ -396,7 +418,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
 
   .tracks-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-6);
   }
 
@@ -407,6 +429,8 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     background: var(--bg-surface-1);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-lg);
+    min-width: 0;
+    width: 100%;
   }
 
   .track-icon-box {
@@ -427,6 +451,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     font-size: 1.25rem;
     color: var(--text-primary);
     margin-bottom: var(--space-2);
+    word-break: break-word;
   }
 
   .track-desc {
@@ -435,6 +460,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     line-height: 1.55;
     flex: 1;
     margin-bottom: var(--space-4);
+    word-break: break-word;
   }
 
   .track-modules-list {
@@ -468,7 +494,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
 
   .modules-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-6);
   }
 
@@ -480,6 +506,8 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     display: flex;
     flex-direction: column;
     transition: transform var(--transition-fast), border-color var(--transition-fast);
+    min-width: 0;
+    width: 100%;
   }
 
   .module-card:hover {
@@ -514,6 +542,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   .module-card-title {
     font-size: 1.15rem;
     margin-bottom: 0.4rem;
+    word-break: break-word;
   }
 
   .module-card-title a {
@@ -534,6 +563,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex: 1;
+    word-break: break-word;
   }
 
   .module-services-row {
@@ -589,7 +619,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
 
   .case-studies-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-6);
   }
 
@@ -611,6 +641,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   .waf-banner-content {
     max-width: 740px;
     margin: 0 auto;
+    min-width: 0;
   }
 
   .waf-pill {
@@ -628,9 +659,10 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
   }
 
   .waf-banner h2 {
-    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
     color: var(--text-display);
     margin-bottom: var(--space-4);
+    word-break: break-word;
   }
 
   .waf-banner p {
@@ -638,6 +670,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: var(--space-6);
+    word-break: break-word;
   }
 
   .waf-actions {
@@ -647,7 +680,7 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     flex-wrap: wrap;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .hero-section {
       padding: var(--space-10) 0 var(--space-6);
     }
@@ -676,9 +709,45 @@ const featuredCaseStudies = caseStudies.filter((cs) => cs.data.featured).slice(0
     .tracks-grid {
       grid-template-columns: 1fr;
     }
+    .track-card {
+      padding: var(--space-5);
+    }
+    .module-card {
+      padding: var(--space-4);
+    }
+    .waf-banner {
+      padding: var(--space-6) var(--space-4);
+    }
   }
 
   @media (max-width: 480px) {
+    .hero-title {
+      font-size: 1.75rem;
+    }
+    .hero-subtitle {
+      font-size: 0.925rem;
+    }
+    .stat-number {
+      font-size: 1.5rem;
+    }
+    .stat-label {
+      font-size: 0.675rem;
+    }
+    .hero-stats-banner {
+      grid-template-columns: 1fr 1fr;
+      padding: var(--space-3);
+      gap: var(--space-2);
+    }
+    .waf-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    .waf-actions .btn {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 360px) {
     .hero-stats-banner {
       grid-template-columns: 1fr;
     }

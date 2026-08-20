@@ -142,7 +142,7 @@ const categories = Array.from(new Set(allServices.map(s => s.category))).sort();
 
   .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-6);
   }
 
@@ -153,6 +153,25 @@ const categories = Array.from(new Set(allServices.map(s => s.category))).sort();
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .services-index-page {
+      padding-top: var(--space-6);
+      padding-bottom: var(--space-10);
+    }
+    .page-header {
+      margin-bottom: var(--space-8);
+    }
+    .services-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+    .service-card {
+      padding: var(--space-4);
+    }
   }
 
   .service-card-top {

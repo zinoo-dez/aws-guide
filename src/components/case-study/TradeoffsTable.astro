@@ -210,4 +210,13 @@ const { title = 'Architecture Decision & Trade-Off Matrix', options = [] } = Ast
     color: var(--text-primary);
     line-height: 1.4;
   }
+
+  @media (max-width: 640px) {
+    .tradeoffs-matrix-card {
+      padding: var(--space-4);
+    }
+    .tradeoffs-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
