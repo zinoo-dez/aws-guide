@@ -117,9 +117,12 @@ import SearchModal from '../ui/SearchModal.astro';
 
 <style>
   .site-header {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 90;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 100;
     height: 64px;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-backdrop);
@@ -448,7 +451,8 @@ import SearchModal from '../ui/SearchModal.astro';
       const target = e.target as HTMLElement | null;
       const menuBtn = target?.closest('#mobile-menu-btn');
       const drawer = document.getElementById('mobile-drawer');
-      const navLink = target?.closest('.mobile-nav-link');
+      const pwaBtn = target?.closest('[data-pwa-install-trigger]');
+      const navLink = target?.closest('.mobile-nav-link:not([data-pwa-install-trigger])');
 
       if (menuBtn) {
         e.preventDefault();
@@ -466,19 +470,20 @@ import SearchModal from '../ui/SearchModal.astro';
         return;
       }
 
-      // Close drawer when clicking any link inside it
-      if (navLink) {
+      // Handle PWA Install button click
+      if (pwaBtn) {
+        e.preventDefault();
+        e.stopPropagation();
         const btn = document.getElementById('mobile-menu-btn');
         btn?.classList.remove('is-open');
         btn?.setAttribute('aria-expanded', 'false');
         drawer?.setAttribute('hidden', '');
+        window.dispatchEvent(new CustomEvent('open-pwa-install'));
         return;
       }
 
-      const pwaBtn = target?.closest('[data-pwa-install-trigger]');
-      if (pwaBtn) {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('open-pwa-install'));
+      // Close drawer when clicking any link inside it
+      if (navLink) {
         const btn = document.getElementById('mobile-menu-btn');
         btn?.classList.remove('is-open');
         btn?.setAttribute('aria-expanded', 'false');

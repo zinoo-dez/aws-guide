@@ -88,6 +88,48 @@
     );
   }
 
+  // Top-level listener so beforeinstallprompt is never lost
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      (window as any).deferredPwaPrompt = e;
+
+      const dismissed = sessionStorage.getItem(DISMISS_KEY);
+      if (!dismissed && !isStandaloneMode()) {
+        setTimeout(() => {
+          const banner = document.getElementById('pwa-install-banner');
+          if (banner && !isStandaloneMode()) {
+            banner.removeAttribute('hidden');
+            requestAnimationFrame(() => {
+              banner?.classList.add('pwa-banner-visible');
+            });
+          }
+        }, 2000);
+      }
+    });
+
+    // Successfully Installed Handler
+    window.addEventListener('appinstalled', () => {
+      localStorage.setItem(INSTALLED_KEY, 'true');
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) {
+        banner.classList.remove('pwa-banner-visible');
+        setTimeout(() => { banner.setAttribute('hidden', ''); }, 300);
+      }
+      sessionStorage.setItem(DISMISS_KEY, 'true');
+      const toast = document.getElementById('pwa-success-toast');
+      if (toast) {
+        toast.removeAttribute('hidden');
+        toast.classList.add('pwa-toast-visible');
+        setTimeout(() => {
+          toast.classList.remove('pwa-toast-visible');
+          setTimeout(() => { toast.setAttribute('hidden', ''); }, 300);
+        }, 4000);
+      }
+    });
+  }
+
   function initPwaPrompt() {
     const banner = document.getElementById('pwa-install-banner');
     const installBtn = document.getElementById('pwa-install-btn');
@@ -100,36 +142,26 @@
 
     // Do not show if already in standalone app mode
     if (isStandaloneMode()) {
-      banner.hidden = true;
+      banner.setAttribute('hidden', '');
       return;
     }
 
-    // Show banner only when beforeinstallprompt event is fired and not dismissed
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      (window as any).deferredPwaPrompt = e;
-
-      const dismissed = sessionStorage.getItem(DISMISS_KEY);
-      if (!dismissed) {
-        setTimeout(() => {
-          showBanner();
-        }, 2000);
+    function showBanner(showManual = false) {
+      if (!banner || isStandaloneMode()) return;
+      if (showManual && manualTip) {
+        manualTip.removeAttribute('hidden');
       }
-    });
-
-    function showBanner() {
-      if (banner && !isStandaloneMode()) {
-        banner.hidden = false;
-        banner.classList.add('pwa-banner-visible');
-      }
+      banner.removeAttribute('hidden');
+      requestAnimationFrame(() => {
+        banner?.classList.add('pwa-banner-visible');
+      });
     }
 
     function hideBanner(persistDismiss = true) {
       if (!banner) return;
       banner.classList.remove('pwa-banner-visible');
       setTimeout(() => {
-        banner.hidden = true;
+        banner?.setAttribute('hidden', '');
       }, 300);
 
       if (persistDismiss) {
@@ -137,51 +169,60 @@
       }
     }
 
-    // Install Action
-    installBtn?.addEventListener('click', async () => {
+    function showInstalledToast(customMsg?: string) {
+      if (toast) {
+        if (customMsg) {
+          const span = toast.querySelector('span');
+          if (span) span.textContent = customMsg;
+        }
+        toast.removeAttribute('hidden');
+        toast.classList.add('pwa-toast-visible');
+        setTimeout(() => {
+          toast.classList.remove('pwa-toast-visible');
+          setTimeout(() => { toast.setAttribute('hidden', ''); }, 300);
+        }, 4000);
+      }
+    }
+
+    async function triggerInstallFlow() {
+      if (isStandaloneMode()) {
+        showInstalledToast('AWS Guide is already running as a desktop app!');
+        return;
+      }
+
       const activePrompt = deferredPrompt || (window as any).deferredPwaPrompt;
       if (activePrompt) {
-        activePrompt.prompt();
-        const { outcome } = await activePrompt.userChoice;
-        if (outcome === 'accepted') {
-          hideBanner(true);
-          showInstalledToast();
+        try {
+          activePrompt.prompt();
+          const { outcome } = await activePrompt.userChoice;
+          if (outcome === 'accepted') {
+            hideBanner(true);
+            showInstalledToast();
+          }
+          deferredPrompt = null;
+          (window as any).deferredPwaPrompt = null;
+        } catch (err) {
+          console.warn('[PWA] Prompt error:', err);
+          showBanner(true);
         }
-        deferredPrompt = null;
-        (window as any).deferredPwaPrompt = null;
       } else {
-        if (manualTip) {
-          manualTip.hidden = false;
-          manualTip.classList.add('animate-fade-in');
-        }
+        // Fallback for browsers without direct beforeinstallprompt (e.g. Safari, Firefox)
+        showBanner(true);
       }
+    }
+
+    // Install Action inside Banner
+    installBtn?.addEventListener('click', async () => {
+      await triggerInstallFlow();
     });
 
     dismissBtn?.addEventListener('click', () => hideBanner(true));
     closeBtn?.addEventListener('click', () => hideBanner(true));
 
     // Global listener to trigger install prompt from drawer or anywhere in UI
-    window.addEventListener('open-pwa-install', () => {
-      showBanner();
+    window.addEventListener('open-pwa-install', async () => {
+      await triggerInstallFlow();
     });
-
-    // Successfully Installed Handler
-    window.addEventListener('appinstalled', () => {
-      localStorage.setItem(INSTALLED_KEY, 'true');
-      hideBanner(true);
-      showInstalledToast();
-    });
-
-    function showInstalledToast() {
-      if (toast) {
-        toast.hidden = false;
-        toast.classList.add('pwa-toast-visible');
-        setTimeout(() => {
-          toast.classList.remove('pwa-toast-visible');
-          setTimeout(() => { toast.hidden = true; }, 300);
-        }, 4000);
-      }
-    }
   }
 
   // Setup on first load and on Astro view transitions
@@ -192,6 +233,12 @@
 </script>
 
 <style>
+  .pwa-install-banner[hidden],
+  .pwa-manual-tip[hidden],
+  .pwa-toast[hidden] {
+    display: none !important;
+  }
+
   .pwa-install-banner {
     position: fixed;
     bottom: var(--space-6);
