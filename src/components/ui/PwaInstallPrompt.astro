@@ -110,11 +110,6 @@
       deferredPrompt = e;
       (window as any).deferredPwaPrompt = e;
 
-      // Notify header/UI that install is available
-      document.querySelectorAll('[data-pwa-install-trigger]').forEach((el) => {
-        (el as HTMLElement).style.display = 'inline-flex';
-      });
-
       // Show banner if not recently dismissed in this session
       const dismissed = sessionStorage.getItem(DISMISS_KEY);
       if (!dismissed) {
