@@ -2,6 +2,7 @@
 interface HeadingItem {
   id: string;
   text: string;
+  textMy?: string;
   depth: number;
 }
 
@@ -10,21 +11,25 @@ interface Props {
 }
 
 const defaultSections = [
-  { id: 'business-problem', text: '1. Business Problem & Context' },
-  { id: 'requirements-constraints', text: '2. Requirements & Constraints' },
-  { id: 'architecture-overview', text: '3. Architecture & Diagram' },
-  { id: 'aws-services', text: '4. AWS Services Rationale' },
-  { id: 'trade-offs', text: '5. Key Design Trade-offs' },
-  { id: 'implementation', text: '6. Implementation Highlights' },
-  { id: 'results-metrics', text: '7. Results & Benchmarks' },
-  { id: 'takeaways', text: '8. Key Takeaways' },
-  { id: 'quiz', text: '9. Knowledge Retention Quiz' },
-  { id: 'resources', text: '10. Official AWS References' },
+  { id: 'business-problem', text: '1. Business Problem & Context', textMy: '၁။ စီးပွားရေး ပြဿနာနှင့် အခက်အခဲ' },
+  { id: 'requirements-constraints', text: '2. Requirements & Constraints', textMy: '၂။ စနစ်လိုအပ်ချက်နှင့် ကန့်သတ်ချက်များ' },
+  { id: 'architecture-overview', text: '3. Architecture & Diagram', textMy: '၃။ Architecture ဒီဇိုင်းနှင့် ပုံကြမ်း' },
+  { id: 'aws-services', text: '4. AWS Services Rationale', textMy: '၄။ AWS ဝန်ဆောင်မှု ရွေးချယ်မှုများ' },
+  { id: 'trade-offs', text: '5. Key Design Trade-offs', textMy: '၅။ အဓိက Trade-offs နှိုင်းယှဉ်ချက်' },
+  { id: 'implementation', text: '6. Implementation Highlights', textMy: '၆။ လက်တွေ့ တည်ဆောက်ပုံ အချက်များ' },
+  { id: 'results-metrics', text: '7. Results & Benchmarks', textMy: '၇။ စွမ်းဆောင်ရည် ရလဒ်နှင့် ညွှန်းကိန်းများ' },
+  { id: 'takeaways', text: '8. Key Takeaways', textMy: '၈။ အဓိက မှတ်သားဖွယ်ရာ အနှစ်ချုပ်' },
+  { id: 'quiz', text: '9. Knowledge Retention Quiz', textMy: '၉။ အသိပညာ စစ်ဆေးမှု မေးခွန်းများ' },
+  { id: 'resources', text: '10. Official AWS References', textMy: '၁၀။ AWS တရားဝင် ရည်ညွှန်းချက်များ' },
 ];
 
 const { headings } = Astro.props;
 const items = (headings && headings.length > 0)
-  ? headings.map(h => ({ id: h.id, text: h.text }))
+  ? headings.map(h => ({ 
+      id: h.id, 
+      text: h.text, 
+      textMy: defaultSections.find(d => d.id === h.id)?.textMy || h.text 
+    }))
   : defaultSections;
 ---
 
@@ -45,7 +50,8 @@ const items = (headings && headings.length > 0)
     {items.map((item) => (
       <li>
         <a href={`#${item.id}`} class="toc-link" data-heading-id={item.id}>
-          {item.text}
+          <span class="text-en">{item.text}</span>
+          <span class="text-my" hidden>{item.textMy || item.text}</span>
         </a>
       </li>
     ))}
