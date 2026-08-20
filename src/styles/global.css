@@ -244,6 +244,23 @@
   --glass-border: 1px solid #E2E8F0;
 }
 
+/* Theme Toggle Sun/Moon Icon Rules */
+html[data-theme="light"] .sun-icon {
+  display: none !important;
+}
+html[data-theme="light"] .moon-icon {
+  display: block !important;
+}
+
+html:not([data-theme="light"]) .sun-icon,
+html[data-theme="dark"] .sun-icon {
+  display: block !important;
+}
+html:not([data-theme="light"]) .moon-icon,
+html[data-theme="dark"] .moon-icon {
+  display: none !important;
+}
+
 /* CSS Reset & Global Rules */
 *, *::before, *::after {
   box-sizing: border-box;
