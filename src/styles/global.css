@@ -276,6 +276,25 @@ html:not([data-lang="my"]) .text-en {
   display: inline !important;
 }
 
+/* Language Toggle Flag Switcher */
+html[data-lang="my"] #language-toggle .lang-flag-my,
+html[data-lang="my"] #language-toggle .lang-text-my {
+  display: none !important;
+}
+html[data-lang="my"] #language-toggle .lang-flag-en,
+html[data-lang="my"] #language-toggle .lang-text-en {
+  display: inline !important;
+}
+
+html:not([data-lang="my"]) #language-toggle .lang-flag-en,
+html:not([data-lang="my"]) #language-toggle .lang-text-en {
+  display: none !important;
+}
+html:not([data-lang="my"]) #language-toggle .lang-flag-my,
+html:not([data-lang="my"]) #language-toggle .lang-text-my {
+  display: inline !important;
+}
+
 /* CSS Reset & Global Rules */
 *, *::before, *::after {
   box-sizing: border-box;

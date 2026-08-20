@@ -111,14 +111,21 @@ export function applyTranslations(lang?: SupportedLang) {
     }
   });
 
-  // Update language toggle buttons UI state
+  // Update language toggle buttons accessibility and title state
   document.querySelectorAll('.lang-toggle-btn').forEach((btn) => {
-    const currentLabel = btn.querySelector('.lang-current-label');
-    if (currentLabel) {
-      currentLabel.textContent = activeLang === 'my' ? 'မြန်မာ' : 'EN';
-    }
     btn.setAttribute('data-current-lang', activeLang);
-    btn.setAttribute('title', activeLang === 'my' ? 'Switch to English' : 'Switch to Myanmar (မြန်မာဘာသာ)');
+    btn.setAttribute(
+      'title',
+      activeLang === 'en'
+        ? 'မြန်မာဘာသာသို့ ပြောင်းမည် (Switch to Myanmar)'
+        : 'Switch to English (အင်္ဂလိပ်ဘာသာသို့ ပြောင်းမည်)'
+    );
+    btn.setAttribute(
+      'aria-label',
+      activeLang === 'en'
+        ? 'Switch to Myanmar language'
+        : 'Switch to English language'
+    );
   });
 }
 
