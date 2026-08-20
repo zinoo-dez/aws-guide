@@ -409,11 +409,36 @@ const sortedModules = [...modules].sort((a, b) => a.data.moduleNumber - b.data.m
   }
 
   @media (max-width: 640px) {
+    .roadmap-page {
+      padding-top: var(--space-6);
+      padding-bottom: var(--space-10);
+    }
+    .roadmap-header {
+      margin-bottom: var(--space-8);
+    }
     .timeline-node {
       grid-template-columns: 1fr;
     }
     .timeline-marker {
       display: none;
+    }
+    .timeline-card {
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      min-width: 0;
+      width: 100%;
+    }
+    .cases-pills-grid {
+      grid-template-columns: 1fr;
+    }
+    .node-title {
+      font-size: 1.25rem;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .node-tagline, .node-desc {
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
   }
 </style>
